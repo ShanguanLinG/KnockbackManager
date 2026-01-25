@@ -1,0 +1,14 @@
+name: KnockbackManager
+main: me.dw1e.kbm.KnockbackManager
+version: 1.14.1
+author: dw1e
+softdepend: [ ProtocolLib ]
+api-version: 1.13
+
+commands:
+  kbm:
+    aliases: [ kb, knockback ]
+
+permissions:
+  kbm.use:
+    default: op

@@ -1,0 +1,16 @@
+horizontal:
+  ground: 0.4
+  air: 0.4
+  sprint_extra: 0.5
+  projectile_multiplier: 1.0
+vertical:
+  ground: 0.36075
+  air: 0.24775
+  sprint_extra: 0.1
+  projectile_multiplier: 1.0
+misplace:
+  enabled: false
+  delay: 2
+stop_sprint: true
+y_limit: 0.675
+hit_delay: 20
