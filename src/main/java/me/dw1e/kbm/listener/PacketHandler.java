@@ -13,7 +13,7 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class PacketHandler extends PacketAdapter {
 
@@ -26,11 +26,11 @@ public final class PacketHandler extends PacketAdapter {
 
     private final KnockbackManager plugin;
 
-    private final Queue<QueuedPacket> queue = new ConcurrentLinkedQueue<>();
+    private final Map<UUID, Deque<QueuedPacket>> packetQueues = new ConcurrentHashMap<>();
     private final Map<UUID, Set<String>> expectedPackets = new ConcurrentHashMap<>();
 
     public PacketHandler(KnockbackManager plugin) {
-        super(plugin, ListenerPriority.LOW, MISPLACED_PACKETS);
+        super(plugin, ListenerPriority.LOWEST, MISPLACED_PACKETS);
         this.plugin = plugin;
     }
 
@@ -39,14 +39,17 @@ public final class PacketHandler extends PacketAdapter {
     }
 
     public void disable() {
-        queue.clear();
+        packetQueues.clear();
         expectedPackets.clear();
+
         ProtocolLibrary.getProtocolManager().removePacketListener(this);
     }
 
     public void onQuit(Player player) {
-        queue.removeIf(q -> q.player.equals(player));
-        expectedPackets.remove(player.getUniqueId());
+        UUID uuid = player.getUniqueId();
+
+        packetQueues.remove(uuid);
+        expectedPackets.remove(uuid);
     }
 
     @Override
@@ -54,50 +57,64 @@ public final class PacketHandler extends PacketAdapter {
         if (!MISPLACED_PACKETS.contains(event.getPacketType())) return;
 
         Player victim = event.getPlayer();
-        PlayerData victimData = plugin.getDataManager().getData(victim.getUniqueId());
+        UUID uuid = victim.getUniqueId();
+
+        PlayerData victimData = plugin.getDataManager().getData(uuid);
         if (victimData == null) return;
 
-        Set<String> set = expectedPackets.get(victim.getUniqueId());
-        if (set != null) {
-            String key = buildKey(event.getPacketType(), event.getPacket().getIntegers().read(0), plugin.getTicks());
+        int entityId = event.getPacket().getIntegers().read(0);
 
+        // 防止死循环
+        Set<String> set = expectedPackets.get(uuid);
+        if (set != null) {
+            String key = buildKey(event.getPacketType(), entityId, plugin.getTicks());
             if (set.remove(key)) return;
         }
 
         FileConfiguration config = plugin.getKbFile().getKbMap().get(victimData.getKbFilename()).getValue();
+
         if (!config.getBoolean("misplace.enabled")) return;
 
-        int entityId = event.getPacket().getIntegers().read(0);
+        // 不是攻击者的实体移动包
         if (entityId != victimData.getAttackerEntityId()) return;
 
-        int ticks = plugin.getTicks();
-
-        PacketContainer clonedPacket = event.getPacket().deepClone();
-
-        event.setCancelled(true);
-        victimData.setLastMisplacedTicks(ticks);
-
+        int currentTick = plugin.getTicks();
         int delay = Math.max(1, config.getInt("misplace.delay"));
-        queue.add(new QueuedPacket(victim, clonedPacket, ticks + delay));
+
+        PacketContainer cloned = event.getPacket().deepClone();
+        event.setCancelled(true);
+
+        victimData.setLastMisplacedTicks(currentTick);
+
+        packetQueues
+                .computeIfAbsent(uuid, k -> new ConcurrentLinkedDeque<>())
+                .addLast(new QueuedPacket(victim, cloned, currentTick + delay));
     }
 
     public void tick(int currentTick) {
-        QueuedPacket queued;
+        for (Iterator<Map.Entry<UUID, Deque<QueuedPacket>>> it = packetQueues.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<UUID, Deque<QueuedPacket>> entry = it.next();
+            Deque<QueuedPacket> queue = entry.getValue();
 
-        while ((queued = queue.peek()) != null) {
-            if (currentTick < queued.sendTick) break;
+            while (true) {
+                QueuedPacket queued = queue.peekFirst();
+                if (queued == null || currentTick < queued.sendTick) break;
 
-            String key = buildKey(
-                    queued.packet.getType(),
-                    queued.packet.getIntegers().read(0),
-                    queued.sendTick
-            );
+                String key = buildKey(
+                        queued.packet.getType(),
+                        queued.packet.getIntegers().read(0),
+                        queued.sendTick
+                );
 
-            expectedPackets.computeIfAbsent(queued.player.getUniqueId(), k -> new HashSet<>()).add(key);
+                expectedPackets.computeIfAbsent(entry.getKey(), k -> ConcurrentHashMap.newKeySet()).add(key);
 
-            ProtocolLibrary.getProtocolManager().sendServerPacket(queued.player, queued.packet);
+                ProtocolLibrary.getProtocolManager().sendServerPacket(queued.player, queued.packet);
 
-            queue.poll();
+                queue.pollFirst();
+            }
+
+            // 队列空了就清掉, 避免 Map 无限增长
+            if (queue.isEmpty()) it.remove();
         }
     }
 
