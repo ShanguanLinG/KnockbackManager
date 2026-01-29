@@ -19,6 +19,7 @@ public final class KnockbackManager extends JavaPlugin {
     public static final String PREFIX = "§8[§eKBM§8]";
 
     private static KnockbackManager instance;
+
     private KnockbackManagerAPI api;
     private DataManager dataManager;
     private PacketHandler packetHandler;

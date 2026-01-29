@@ -15,8 +15,6 @@ public final class PlayerData {
 
     private int attackerEntityId = -1;
 
-    private int lastMisplacedTicks;
-
     public PlayerData(Player player) {
         this.player = player;
         lastGroundY = player.getLocation().getY();
@@ -74,13 +72,5 @@ public final class PlayerData {
 
     public void setAttackerEntityId(int id) {
         attackerEntityId = id;
-    }
-
-    public int getLastMisplacedTicks() {
-        return lastMisplacedTicks;
-    }
-
-    public void setLastMisplacedTicks(int ticks) {
-        lastMisplacedTicks = ticks;
     }
 }

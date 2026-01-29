@@ -15,7 +15,5 @@ public interface KnockbackManagerAPI {
 
     void setFilter(Player player, boolean toggle);
 
-    boolean isMisplacing(Player player);
-
     FileConfiguration getKBConfig(String filename);
 }

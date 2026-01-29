@@ -23,7 +23,8 @@ public final class KBMCommand implements TabExecutor {
     private final List<String> types = Arrays.asList(
             "horizontal.ground", "horizontal.air", "horizontal.sprint_extra", "horizontal.projectile_multiplier",
             "vertical.ground", "vertical.air", "vertical.sprint_extra", "vertical.projectile_multiplier",
-            "misplace.enabled", "misplace.delay", "stop_sprint", "y_limit", "hit_delay");
+            "packet.misplace.enabled", "packet.misplace.distance", "packet.delay.enabled", "packet.delay.ticks",
+            "stop_sprint", "y_limit", "hit_delay");
 
     public KBMCommand(KnockbackManager plugin) {
         this.plugin = plugin;
@@ -49,25 +50,35 @@ public final class KBMCommand implements TabExecutor {
             case "edit":
             case "reload":
             case "view": {
-                if (args.length == 2) return filterStartingWith(fileNames, args[1]);
+                if (args.length == 2) {
+                    return filterStartingWith(fileNames, args[1]);
 
-                else if (args.length == 3 && subCmd.equals("edit")) return filterStartingWith(types, args[2]);
+                } else if (args.length == 3 && subCmd.equals("edit")) {
+                    return filterStartingWith(types, args[2]);
 
-                else if (args.length == 4 && (args[2].equalsIgnoreCase("stop_sprint")
-                        || args[2].equalsIgnoreCase("misplace.enabled")))
-                    return filterStartingWith(Arrays.asList("true", "false"), args[3]);
+                } else if (args.length == 4) {
+                    switch (args[2].toLowerCase()) {
+                        case "stop_sprint":
+                        case "packet.misplace.enabled":
+                        case "packet.delay.enabled":
+                            return filterStartingWith(Arrays.asList("true", "false"), args[3]);
+                    }
+                }
                 break;
             }
             case "filter":
             case "getkb":
             case "setkb": {
-                if (args.length == 2) return filterStartingWith(onlinePlayers, args[1]);
+                if (args.length == 2) {
+                    return filterStartingWith(onlinePlayers, args[1]);
 
-                else if (args.length == 3) {
+                } else if (args.length == 3) {
+                    if (subCmd.equals("filter")) {
+                        return filterStartingWith(Arrays.asList("true", "false"), args[2]);
 
-                    if (subCmd.equals("filter")) return filterStartingWith(Arrays.asList("true", "false"), args[2]);
-
-                    else if (subCmd.equals("setkb")) return filterStartingWith(fileNames, args[2]);
+                    } else if (subCmd.equals("setkb")) {
+                        return filterStartingWith(fileNames, args[2]);
+                    }
                 }
                 break;
             }
@@ -87,12 +98,12 @@ public final class KBMCommand implements TabExecutor {
 
         if (!sender.hasPermission("kbm.use")) {
             sender.sendMessage(prefix + " §c你没有此命令的使用权限!");
-            return false;
+            return true;
         }
 
         if (args.length == 0) {
             sender.sendMessage(prefix + " §7使用 §f/" + label + " help §7查看帮助!");
-            return false;
+            return true;
         }
 
         switch (args[0].toLowerCase()) {
@@ -117,7 +128,7 @@ public final class KBMCommand implements TabExecutor {
             case "create":
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " create <KB文件名>");
-                    return false;
+                    return true;
                 }
 
                 plugin.getKbFile().create(args[1], sender);
@@ -126,7 +137,7 @@ public final class KBMCommand implements TabExecutor {
             case "delete":
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " delete <KB文件名>");
-                    return false;
+                    return true;
                 }
 
                 plugin.getKbFile().delete(args[1], sender);
@@ -141,12 +152,12 @@ public final class KBMCommand implements TabExecutor {
             case "edit": {
                 if (args.length != 4) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " edit <KB文件名> <类型> <数值>");
-                    return false;
+                    return true;
                 }
 
                 if (!plugin.getKbFile().getKbMap().containsKey(args[1])) {
                     sender.sendMessage(prefix + " §cKB文件 " + args[1] + " 不存在!");
-                    return false;
+                    return true;
                 }
 
                 FileConfiguration config = plugin.getKbFile().getKbMap().get(args[1]).getValue();
@@ -157,12 +168,13 @@ public final class KBMCommand implements TabExecutor {
 
                 if (!types.contains(type)) {
                     sender.sendMessage(prefix + " §c无效的类型: " + args[2]);
-                    return false;
+                    return true;
                 }
 
                 switch (type) {
-                    case "stop_sprint":
-                    case "misplace.enabled": {
+                    case "packet.misplace.enabled":
+                    case "packet.delay.enabled":
+                    case "stop_sprint": {
                         boolean value;
 
                         String input = args[3].toLowerCase();
@@ -170,7 +182,7 @@ public final class KBMCommand implements TabExecutor {
                         if (input.equals("true") || input.equals("false")) value = Boolean.parseBoolean(input);
                         else {
                             sender.sendMessage(prefix + " §c无效的布尔值: " + args[3]);
-                            return false;
+                            return true;
                         }
 
                         if (config.get(type).equals(value)) {
@@ -182,7 +194,7 @@ public final class KBMCommand implements TabExecutor {
 
                         break;
                     }
-                    case "misplace.delay":
+                    case "packet.delay.ticks":
                     case "hit_delay": {
                         int value;
 
@@ -190,7 +202,7 @@ public final class KBMCommand implements TabExecutor {
                             value = Integer.parseInt(args[3]);
                         } catch (NumberFormatException ignore) {
                             sender.sendMessage(prefix + " §c无效的整数: " + args[3]);
-                            return false;
+                            return true;
                         }
 
                         if (config.get(type).equals(value)) {
@@ -198,9 +210,9 @@ public final class KBMCommand implements TabExecutor {
                             break;
                         }
 
-                        if (type.equals("misplace.delay") && (value < 1 || value > 5)) {
-                            sender.sendMessage(prefix + " §c不在范围(1-5)内的数值: " + value);
-                            return false;
+                        if (type.equals("packet.delay.ticks") && (value < 1 || value > 5)) {
+                            sender.sendMessage(prefix + " §c不在范围(1~5)内的数值: " + value);
+                            return true;
                         }
 
                         config.set(type, value);
@@ -214,12 +226,17 @@ public final class KBMCommand implements TabExecutor {
                             value = Double.parseDouble(args[3]);
                         } catch (NumberFormatException ignore) {
                             sender.sendMessage(prefix + " §c无效的浮点数: " + args[3]);
-                            return false;
+                            return true;
                         }
 
                         if (config.get(type).equals(value)) {
                             sameValue = true;
                             break;
+                        }
+
+                        if (type.equals("packet.misplace.distance") && (value < 0.0 || value > 1.0)) {
+                            sender.sendMessage(prefix + " §c不在范围(0.0~1.0)内的数值: " + value);
+                            return true;
                         }
 
                         config.set(type, value);
@@ -239,12 +256,12 @@ public final class KBMCommand implements TabExecutor {
             case "view": {
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " view <KB文件名>");
-                    return false;
+                    return true;
                 }
 
                 if (!plugin.getKbFile().getKbMap().containsKey(args[1])) {
                     sender.sendMessage(prefix + " §cKB文件 " + args[1] + " 不存在!");
-                    return false;
+                    return true;
                 }
 
                 sender.sendMessage(prefix + " §7查看KB文件 §f" + args[1] + " §7的数值:");
@@ -261,7 +278,7 @@ public final class KBMCommand implements TabExecutor {
             case "reload":
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " reload <KB文件名|*>");
-                    return false;
+                    return true;
                 }
 
                 plugin.getKbFile().reload(args[1], sender);
@@ -270,14 +287,14 @@ public final class KBMCommand implements TabExecutor {
             case "getkb": {
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " getkb <玩家>");
-                    return false;
+                    return true;
                 }
 
                 Player player = Bukkit.getPlayerExact(args[1]);
 
                 if (player == null) {
                     sender.sendMessage(prefix + " §c没有找到名为 " + args[1] + " 的玩家!");
-                    return false;
+                    return true;
                 }
 
                 PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
@@ -290,12 +307,12 @@ public final class KBMCommand implements TabExecutor {
             case "setkb": {
                 if (args.length != 3) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " setkb <玩家|*> <KB文件名>");
-                    return false;
+                    return true;
                 }
 
                 if (!plugin.getKbFile().getKbMap().containsKey(args[2])) {
                     sender.sendMessage(prefix + " §cKB文件 " + args[2] + " 不存在!");
-                    return false;
+                    return true;
                 }
 
                 if (args[1].equals("*")) {
@@ -310,14 +327,14 @@ public final class KBMCommand implements TabExecutor {
 
                 if (player == null) {
                     sender.sendMessage(prefix + " §c没有找到名为 " + args[1] + " 的玩家!");
-                    return false;
+                    return true;
                 }
 
                 PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
 
                 if (data.getKbFilename().equals(args[2])) {
                     sender.sendMessage(prefix + " §c无变化. " + player.getName() + " 原已使用 " + args[2]);
-                    return false;
+                    return true;
                 }
 
                 data.setKbFilename(args[2]);
@@ -329,14 +346,14 @@ public final class KBMCommand implements TabExecutor {
             case "filter": {
                 if (args.length != 3) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " filter <玩家> <true/false>");
-                    return false;
+                    return true;
                 }
 
                 Player player = Bukkit.getPlayerExact(args[1]);
 
                 if (player == null) {
                     sender.sendMessage(prefix + " §c没有找到名为 " + args[1] + " 的玩家!");
-                    return false;
+                    return true;
                 }
 
                 boolean value;
@@ -346,14 +363,14 @@ public final class KBMCommand implements TabExecutor {
                 if (input.equals("true") || input.equals("false")) value = Boolean.parseBoolean(input);
                 else {
                     sender.sendMessage(prefix + " §c无效的布尔值: " + args[2]);
-                    return false;
+                    return true;
                 }
 
                 PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
 
                 if (data.isFilter() == value) {
                     sender.sendMessage(prefix + " §c无变化. " + player.getName() + " 原已" + (value ? "加入" : "移出") + "过滤名单!");
-                    return false;
+                    return true;
                 }
 
                 data.setFilter(value);
@@ -364,7 +381,7 @@ public final class KBMCommand implements TabExecutor {
             }
             default:
                 sender.sendMessage(prefix + " §c未知子命令: " + args[0]);
-                return false;
+                return true;
         }
     }
 

@@ -40,14 +40,6 @@ public final class DefaultKnockbackManagerAPI implements KnockbackManagerAPI {
         getData(player).setFilter(toggle);
     }
 
-    public boolean isMisplacing(Player player) {
-        PlayerData data = getData(player);
-
-        FileConfiguration kbConfig = getKBConfig(data.getKbFilename());
-
-        return kbConfig != null && plugin.getTicks() - data.getLastMisplacedTicks() < kbConfig.getInt("misplace.delay");
-    }
-
     public FileConfiguration getKBConfig(String filename) {
         return isKBFileExist(filename) ? plugin.getKbFile().getKbMap().get(filename).getValue() : null;
     }

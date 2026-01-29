@@ -60,7 +60,22 @@ public final class KBFile {
             fileConfig.options().copyDefaults(true).copyHeader(true);
             fileConfig.addDefaults(defaultConfig);
 
-            fileConfig.set("misplace.delay", Math.max(1, Math.min(5, fileConfig.getInt("misplace.delay"))));
+            if (fileConfig.get("misplace.enabled") != null) {
+                plugin.consoleLog("§a已将旧版配置文件 §e" + filename + " §a更新!");
+
+                fileConfig.set("packet.misplace.enabled", false);
+                fileConfig.set("packet.misplace.distance", 0.25);
+
+                fileConfig.set("packet.delay.enabled", fileConfig.getBoolean("misplace.enabled"));
+                fileConfig.set("packet.delay.ticks", fileConfig.getInt("misplace.delay"));
+
+                fileConfig.set("misplace.enabled", null);
+                fileConfig.set("misplace.delay", null);
+                fileConfig.set("misplace", null);
+            }
+
+            fileConfig.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, fileConfig.getInt("packet.delay.ticks"))));
+            fileConfig.set("packet.delay.ticks", Math.max(1, Math.min(5, fileConfig.getInt("packet.delay.ticks"))));
 
             try {
                 fileConfig.save(pair.getKey());
