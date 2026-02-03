@@ -35,6 +35,10 @@ public final class EventListener implements Listener {
 
         if (victimData == null || victimData.isFilter()) return;
 
+        int tick = plugin.getTick();
+
+        victimData.setLastAttackedByOtherTick(tick);
+
         Entity source = event.getDamager();
         LivingEntity attacker;
 
@@ -63,8 +67,6 @@ public final class EventListener implements Listener {
             }
 
         } else return;
-
-        victimData.setAttackerEntityId(attacker.getEntityId());
 
         double deltaX = victim.getLocation().getX() - source.getLocation().getX();
         double deltaZ = victim.getLocation().getZ() - source.getLocation().getZ();
@@ -120,6 +122,9 @@ public final class EventListener implements Listener {
 
         PlayerData attackerData = plugin.getDataManager().getData(attacker.getUniqueId());
         if (attackerData != null) {
+            attackerData.setLastAttackTick(tick);
+            attackerData.setTarget(victim);
+
             packetSprinting = attackerData.isSprinting();
         }
 
@@ -232,7 +237,7 @@ public final class EventListener implements Listener {
             case "/knockbackmanager:kb":
             case "/knockbackmanager:kbm":
             case "/knockbackmanager:knockback":
-                event.getPlayer().sendMessage(KnockbackManager.PREFIX + "§7此服务器正在使用 §fKnockback Manager§7(v"
+                event.getPlayer().sendMessage(KnockbackManager.PREFIX + " §7此服务器正在使用 §fKnockback Manager§7(v"
                         + plugin.getDescription().getVersion() + ") 击退修改插件");
                 break;
         }

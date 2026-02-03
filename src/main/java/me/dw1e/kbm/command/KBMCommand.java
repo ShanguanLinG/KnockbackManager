@@ -379,6 +379,18 @@ public final class KBMCommand implements TabExecutor {
 
                 return true;
             }
+            case "test": {
+                try {
+                    KnockbackManager.TEST = Double.parseDouble(args[1]);
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(KnockbackManager.PREFIX + " §c无效的数值: " + args[1]);
+                    return true;
+                }
+
+                sender.sendMessage(KnockbackManager.PREFIX + " §a测试数值已设置为: " + KnockbackManager.TEST);
+
+                return true;
+            }
             default:
                 sender.sendMessage(prefix + " §c未知子命令: " + args[0]);
                 return true;

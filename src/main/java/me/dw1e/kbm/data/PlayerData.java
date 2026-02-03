@@ -13,7 +13,9 @@ public final class PlayerData {
     private boolean sprinting, filter;
     private double lastGroundY;
 
-    private int attackerEntityId = -1;
+    private int lastAttackTick, lastAttackedByOtherTick;
+
+    private Player target;
 
     public PlayerData(Player player) {
         this.player = player;
@@ -54,8 +56,8 @@ public final class PlayerData {
         return lastGroundY;
     }
 
-    public void setLastGroundY(double lastGroundY) {
-        this.lastGroundY = lastGroundY;
+    public void setLastGroundY(double y) {
+        this.lastGroundY = y;
     }
 
     public Vector getVelocity() {
@@ -66,11 +68,27 @@ public final class PlayerData {
         this.velocity = velocity;
     }
 
-    public int getAttackerEntityId() {
-        return attackerEntityId;
+    public int getLastAttackedByOtherTick() {
+        return lastAttackedByOtherTick;
     }
 
-    public void setAttackerEntityId(int id) {
-        attackerEntityId = id;
+    public void setLastAttackedByOtherTick(int tick) {
+        this.lastAttackedByOtherTick = tick;
+    }
+
+    public int getLastAttackTick() {
+        return lastAttackTick;
+    }
+
+    public void setLastAttackTick(int tick) {
+        this.lastAttackTick = tick;
+    }
+
+    public Player getTarget() {
+        return target;
+    }
+
+    public void setTarget(Player target) {
+        this.target = target;
     }
 }

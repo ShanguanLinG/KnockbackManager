@@ -74,7 +74,7 @@ public final class KBFile {
                 fileConfig.set("misplace", null);
             }
 
-            fileConfig.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, fileConfig.getInt("packet.delay.ticks"))));
+            fileConfig.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, fileConfig.getDouble("packet.misplace.distance"))));
             fileConfig.set("packet.delay.ticks", Math.max(1, Math.min(5, fileConfig.getInt("packet.delay.ticks"))));
 
             try {

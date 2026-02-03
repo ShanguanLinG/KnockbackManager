@@ -9,8 +9,6 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import me.dw1e.kbm.KnockbackManager;
 import me.dw1e.kbm.data.PlayerData;
-import me.dw1e.kbm.util.MathUtil;
-import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
@@ -65,6 +63,9 @@ public final class PacketHandler extends PacketAdapter {
         PlayerData viewerData = plugin.getDataManager().getData(viewerUUID);
         if (viewerData == null || viewerData.isFilter()) return;
 
+        Player target = viewerData.getTarget();
+        if (target == null) return;
+
         PacketContainer packet = event.getPacket();
         StructureModifier<Integer> integers = packet.getIntegers();
 
@@ -73,29 +74,40 @@ public final class PacketHandler extends PacketAdapter {
 
         FileConfiguration config = plugin.getKbFile().getKbMap().get(viewerData.getKbFilename()).getValue();
 
+        int tick = plugin.getTick();
+
+        boolean exempt = tick - viewerData.getLastAttackedByOtherTick() > viewer.getMaximumNoDamageTicks() / 2
+                || tick - viewerData.getLastAttackTick() <= target.getMaximumNoDamageTicks() / 2;
+
         // 处理错位
         process_misplace:
         {
-            if (!event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
-                    || !config.getBoolean("packet.misplace.enabled")) break process_misplace;
+            if (!config.getBoolean("packet.misplace.enabled")
+                    || !event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
+                    || entityId != target.getEntityId() || exempt
+            ) break process_misplace;
 
             double entityX = integers.read(1) / 32.0D;
             double entityZ = integers.read(3) / 32.0D;
 
-            Location viewerLoc = viewer.getLocation();
+            double viewerX = viewer.getLocation().getX();
+            double viewerZ = viewer.getLocation().getZ();
 
-            float angle = MathUtil.getAngle(entityX, entityZ, viewerLoc.getX(), viewerLoc.getZ());
+            double dx = viewerX - entityX;
+            double dz = viewerZ - entityZ;
+
+            double len = dx * dx + dz * dz;
+            if (len <= 0.0D) break process_misplace;
+
+            len = Math.sqrt(len);
+            dx /= len;
+            dz /= len;
 
             double misplace = config.getDouble("packet.misplace.distance");
 
-            double offsetX = Math.cos(Math.toRadians(angle)) * misplace;
-            double offsetZ = Math.sin(Math.toRadians(angle)) * misplace;
-
-            integers.write(1, MathUtil.floor((entityX + offsetX) * 32.0D));
-            integers.write(3, MathUtil.floor((entityZ + offsetZ) * 32.0D));
+            integers.write(1, floor((entityX + dx * misplace) * 32.0D));
+            integers.write(3, floor((entityZ + dz * misplace) * 32.0D));
         }
-
-        int currentTick = plugin.getTicks();
 
         // 处理延迟更新位置包
         process_delay:
@@ -103,14 +115,14 @@ public final class PacketHandler extends PacketAdapter {
             // 防止死循环
             Set<String> set = expectedPackets.get(viewerUUID);
             if (set != null) {
-                String key = buildKey(event.getPacketType(), entityId, currentTick);
+                String key = buildKey(event.getPacketType(), entityId, tick);
                 if (set.remove(key)) break process_delay;
             }
 
-            if (!config.getBoolean("packet.delay.enabled")) break process_delay;
-
-            // 不是攻击者的实体移动包
-            if (entityId != viewerData.getAttackerEntityId()) break process_delay;
+            if (!config.getBoolean("packet.delay.enabled")
+                    || event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
+                    || entityId != target.getEntityId() || exempt
+            ) break process_delay;
 
             int delay = Math.max(1, config.getInt("packet.delay.ticks"));
 
@@ -119,13 +131,19 @@ public final class PacketHandler extends PacketAdapter {
 
             packetQueues
                     .computeIfAbsent(viewerUUID, k -> new ConcurrentLinkedDeque<>())
-                    .addLast(new QueuedPacket(viewer, cloned, currentTick + delay));
+                    .addLast(new QueuedPacket(viewer, cloned, tick + delay));
         }
     }
 
     public void tick(int currentTick) {
         for (Iterator<Map.Entry<UUID, Deque<QueuedPacket>>> it = packetQueues.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<UUID, Deque<QueuedPacket>> entry = it.next();
+
+            UUID uuid = entry.getKey();
+
+            Set<String> set = expectedPackets.get(uuid);
+            if (set != null && set.size() > 128) set.clear();
+
             Deque<QueuedPacket> queue = entry.getValue();
 
             while (true) {
@@ -138,7 +156,7 @@ public final class PacketHandler extends PacketAdapter {
                         queued.sendTick
                 );
 
-                expectedPackets.computeIfAbsent(entry.getKey(), k -> ConcurrentHashMap.newKeySet()).add(key);
+                expectedPackets.computeIfAbsent(uuid, k -> ConcurrentHashMap.newKeySet()).add(key);
 
                 ProtocolLibrary.getProtocolManager().sendServerPacket(queued.player, queued.packet);
 
@@ -147,6 +165,9 @@ public final class PacketHandler extends PacketAdapter {
 
             // 队列空了就清掉, 避免 Map 无限增长
             if (queue.isEmpty()) it.remove();
+
+            Set<String> after = expectedPackets.get(uuid);
+            if (after != null && after.isEmpty()) expectedPackets.remove(uuid);
         }
     }
 
@@ -154,6 +175,10 @@ public final class PacketHandler extends PacketAdapter {
         return type.name() + ":" + entityId + ":" + tick;
     }
 
+    private int floor(double v) {
+        int i = (int) v;
+        return (v < i) ? (i - 1) : i;
+    }
 
     private static final class QueuedPacket {
         private final Player player;

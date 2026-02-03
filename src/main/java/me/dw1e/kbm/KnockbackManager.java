@@ -17,6 +17,7 @@ import org.bukkit.scheduler.BukkitTask;
 public final class KnockbackManager extends JavaPlugin {
 
     public static final String PREFIX = "§8[§eKBM§8]";
+    public static double TEST;
 
     private static KnockbackManager instance;
 
@@ -25,7 +26,7 @@ public final class KnockbackManager extends JavaPlugin {
     private PacketHandler packetHandler;
     private KBFile kbFile;
 
-    private int ticks;
+    private int tick;
     private BukkitTask tickTask;
 
     public static KnockbackManager getInstance() {
@@ -78,9 +79,9 @@ public final class KnockbackManager extends JavaPlugin {
         } else consoleLog("§c未检测到 ProtocolLib 安装/运行, Misplace 模块将不会启用!");
 
         tickTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
-            ticks++;
+            tick++;
 
-            if (packetHandler != null) packetHandler.tick(ticks);
+            if (packetHandler != null) packetHandler.tick(tick);
         }, 0L, 1L);
     }
 
@@ -126,8 +127,8 @@ public final class KnockbackManager extends JavaPlugin {
         return kbFile;
     }
 
-    public int getTicks() {
-        return ticks;
+    public int getTick() {
+        return tick;
     }
 
     public void consoleLog(String s) {
