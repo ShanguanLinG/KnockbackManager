@@ -58,24 +58,34 @@ public final class KBFile {
             FileConfiguration fileConfig = pair.getValue();
 
             fileConfig.options().copyDefaults(true).copyHeader(true);
-            fileConfig.addDefaults(defaultConfig);
+            fileConfig.addDefaults(defaultConfig); // 将目前配置与默认配置比对, 查漏补缺
 
             if (fileConfig.get("misplace.enabled") != null) {
                 plugin.consoleLog("§a已将旧版配置文件 §e" + filename + " §a更新!");
 
-                fileConfig.set("packet.misplace.enabled", false);
-                fileConfig.set("packet.misplace.distance", 0.25);
-
                 fileConfig.set("packet.delay.enabled", fileConfig.getBoolean("misplace.enabled"));
                 fileConfig.set("packet.delay.ticks", fileConfig.getInt("misplace.delay"));
-
-                fileConfig.set("misplace.enabled", null);
-                fileConfig.set("misplace.delay", null);
-                fileConfig.set("misplace", null);
             }
 
+            // 限制最大数值
             fileConfig.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, fileConfig.getDouble("packet.misplace.distance"))));
             fileConfig.set("packet.delay.ticks", Math.max(1, Math.min(5, fileConfig.getInt("packet.delay.ticks"))));
+
+            // 删除无用的数值
+            fileConfig.getKeys(true).stream()
+                    .filter(key -> !fileConfig.isConfigurationSection(key))
+                    .filter(key -> !defaultConfig.isSet(key))
+                    .forEach(key -> fileConfig.set(key, null));
+
+            // 在删除掉无用配置后如果section为空, 那么把section也删了
+            fileConfig.getKeys(true).stream()
+                    .filter(fileConfig::isConfigurationSection) // 只处理section
+                    .sorted((a, b) -> Integer.compare(b.length(), a.length())) // 按深度倒序(子节点优先)
+                    .forEach(key -> {
+                        if (fileConfig.getConfigurationSection(key).getKeys(false).isEmpty()) {
+                            fileConfig.set(key, null);
+                        }
+                    });
 
             try {
                 fileConfig.save(pair.getKey());

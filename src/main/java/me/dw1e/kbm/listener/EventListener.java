@@ -26,8 +26,26 @@ public final class EventListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     private void onAttack(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player)) return;
+
+        Player player = (Player) event.getDamager();
+
+        PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
+        if (data == null) return;
+
+        int tick = plugin.getTick();
+
+        if (event.getEntity() instanceof Player) {
+            data.setTarget((Player) event.getEntity());
+        }
+
+        data.setLastAttackTick(tick);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    private void computeVelocity(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
 
         Player victim = (Player) event.getEntity();
@@ -49,6 +67,8 @@ public final class EventListener implements Listener {
             attacker = (LivingEntity) source;
 
         } else if (source instanceof Projectile) { // 投掷物造成的击退
+            if (source instanceof EnderPearl) return;
+
             ProjectileSource shooter = ((Projectile) source).getShooter();
 
             if (!(shooter instanceof LivingEntity)) return;
@@ -68,8 +88,8 @@ public final class EventListener implements Listener {
 
         } else return;
 
-        double deltaX = victim.getLocation().getX() - source.getLocation().getX();
-        double deltaZ = victim.getLocation().getZ() - source.getLocation().getZ();
+        double deltaX = victim.getLocation().getX() - attacker.getLocation().getX();
+        double deltaZ = victim.getLocation().getZ() - attacker.getLocation().getZ();
 
         // 防止坐标一致时, 水平击退为0的问题 (原版处理逻辑)
         while (Math.hypot(deltaX, deltaZ) < 0.0001) {
@@ -84,7 +104,7 @@ public final class EventListener implements Listener {
         Vector velocity = isSelfShootHit
                 // Bow Boost 的击退, 按照玩家视角朝向造成击退
                 ? new Vector(-Math.sin(radianYaw), 1.0, Math.cos(radianYaw))
-                // 其他玩家攻击造成的击退
+                // 其他生物攻击造成的击退
                 : new Vector(deltaX, 0.0, deltaZ).normalize().setY(1.0);
 
         // 玩家发送的数据包地面状态, 可被外挂欺骗
@@ -121,12 +141,7 @@ public final class EventListener implements Listener {
         boolean packetSprinting = false;
 
         PlayerData attackerData = plugin.getDataManager().getData(attacker.getUniqueId());
-        if (attackerData != null) {
-            attackerData.setLastAttackTick(tick);
-            attackerData.setTarget(victim);
-
-            packetSprinting = attackerData.isSprinting();
-        }
+        if (attackerData != null) packetSprinting = attackerData.isSprinting();
 
         // 投掷物造成的击退
         if (isProjectileHit) {
@@ -140,7 +155,11 @@ public final class EventListener implements Listener {
                 double dist = Math.hypot(velocity.getX(), velocity.getZ());
 
                 // 弓箭带有'击退'附魔时, 造成的垂直击退就是固定的 疾跑垂直击退
-                velocity.add(new Vector(velocity.getX() * adder / dist, ver_sprint_extra, velocity.getZ() * adder / dist));
+                velocity.add(new Vector(
+                        velocity.getX() * adder / dist,
+                        ver_sprint_extra,
+                        velocity.getZ() * adder / dist)
+                );
             }
         }
         // 其它生物攻击造成的击退
@@ -184,7 +203,7 @@ public final class EventListener implements Listener {
         victimData.setVelocity(velocityEvent.getVelocity());
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     private void onVelocity(PlayerVelocityEvent event) {
         PlayerData data = plugin.getDataManager().getData(event.getPlayer().getUniqueId());
         if (data == null || data.getVelocity() == null) return;

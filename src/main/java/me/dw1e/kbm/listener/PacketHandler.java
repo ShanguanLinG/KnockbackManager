@@ -87,8 +87,10 @@ public final class PacketHandler extends PacketAdapter {
                     || entityId != target.getEntityId() || exempt
             ) break process_misplace;
 
-            double entityX = integers.read(1) / 32.0D;
-            double entityZ = integers.read(3) / 32.0D;
+            double multiplier = plugin.isAtLeast1_17() ? 1024.0D : 32.0D;
+
+            double entityX = integers.read(1) / multiplier;
+            double entityZ = integers.read(3) / multiplier;
 
             double viewerX = viewer.getLocation().getX();
             double viewerZ = viewer.getLocation().getZ();
@@ -105,8 +107,8 @@ public final class PacketHandler extends PacketAdapter {
 
             double misplace = config.getDouble("packet.misplace.distance");
 
-            integers.write(1, floor((entityX + dx * misplace) * 32.0D));
-            integers.write(3, floor((entityZ + dz * misplace) * 32.0D));
+            integers.write(1, floor((entityX + dx * misplace) * multiplier));
+            integers.write(3, floor((entityZ + dz * misplace) * multiplier));
         }
 
         // 处理延迟更新位置包
@@ -120,7 +122,7 @@ public final class PacketHandler extends PacketAdapter {
             }
 
             if (!config.getBoolean("packet.delay.enabled")
-                    || event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
+                    //|| event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
                     || entityId != target.getEntityId() || exempt
             ) break process_delay;
 

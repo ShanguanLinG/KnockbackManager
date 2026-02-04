@@ -1,5 +1,7 @@
 package me.dw1e.kbm;
 
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.utility.MinecraftVersion;
 import me.dw1e.kbm.api.DefaultKnockbackManagerAPI;
 import me.dw1e.kbm.api.KnockbackManagerAPI;
 import me.dw1e.kbm.command.KBMCommand;
@@ -28,6 +30,8 @@ public final class KnockbackManager extends JavaPlugin {
 
     private int tick;
     private BukkitTask tickTask;
+
+    private boolean isAtLeast1_17;
 
     public static KnockbackManager getInstance() {
         return instance;
@@ -72,6 +76,9 @@ public final class KnockbackManager extends JavaPlugin {
                 consoleLog("§c不支持的 ProtocolLib 版本: §e" + pLibDesc + "§c, 请使用 5.0.0 或之后的版本, Misplace 模块将不会启用!");
             } else {
                 consoleLog("§a检测到 ProtocolLib §e" + pLibDesc + "§a, 已启用 Misplace 模块!");
+
+                isAtLeast1_17 = ProtocolLibrary.getProtocolManager().getMinecraftVersion()
+                        .isAtLeast(MinecraftVersion.CAVES_CLIFFS_1);
 
                 packetHandler = new PacketHandler(this);
                 packetHandler.enable();
@@ -129,6 +136,10 @@ public final class KnockbackManager extends JavaPlugin {
 
     public int getTick() {
         return tick;
+    }
+
+    public boolean isAtLeast1_17() {
+        return isAtLeast1_17;
     }
 
     public void consoleLog(String s) {
