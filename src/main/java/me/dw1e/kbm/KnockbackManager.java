@@ -8,6 +8,7 @@ import me.dw1e.kbm.command.KBMCommand;
 import me.dw1e.kbm.data.DataManager;
 import me.dw1e.kbm.listener.EventListener;
 import me.dw1e.kbm.listener.PacketHandler;
+import me.dw1e.kbm.placeholder.KBMPlaceholder;
 import me.dw1e.kbm.util.KBFile;
 import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
@@ -27,6 +28,7 @@ public final class KnockbackManager extends JavaPlugin {
     private DataManager dataManager;
     private PacketHandler packetHandler;
     private KBFile kbFile;
+    private KBMPlaceholder kbmPlaceholder;
 
     private int tick;
     private BukkitTask tickTask;
@@ -73,7 +75,8 @@ public final class KnockbackManager extends JavaPlugin {
             int pLibVer = Integer.parseInt(pLibDesc.split("\\.")[0]);
 
             if (pLibVer < 5) {
-                consoleLog("§c不支持的 ProtocolLib 版本: §e" + pLibDesc + "§c, 请使用 5.0.0 或之后的版本, Misplace 模块将不会启用!");
+                consoleLog("§c不支持的 ProtocolLib 版本: §e" + pLibDesc
+                        + "§c, 请使用 5.0.0 或更高的版本, Misplace 模块现已禁用!");
             } else {
                 consoleLog("§a检测到 ProtocolLib §e" + pLibDesc + "§a, 已启用 Misplace 模块!");
 
@@ -83,7 +86,14 @@ public final class KnockbackManager extends JavaPlugin {
                 packetHandler = new PacketHandler(this);
                 packetHandler.enable();
             }
-        } else consoleLog("§c未检测到 ProtocolLib 安装/运行, Misplace 模块将不会启用!");
+        } else consoleLog("§c未检测到 ProtocolLib, Misplace 模块现已禁用!");
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            kbmPlaceholder = new KBMPlaceholder(this);
+            kbmPlaceholder.register();
+
+            consoleLog("§a检测到 PlaceholderAPI, 已启用占位符功能!");
+        }
 
         tickTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
             tick++;
@@ -99,6 +109,11 @@ public final class KnockbackManager extends JavaPlugin {
         if (tickTask != null) {
             tickTask.cancel();
             tickTask = null;
+        }
+
+        if (kbmPlaceholder != null) {
+            kbmPlaceholder.unregister();
+            kbmPlaceholder = null;
         }
 
         if (packetHandler != null) {

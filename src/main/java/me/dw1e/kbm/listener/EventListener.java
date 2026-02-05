@@ -13,6 +13,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PotionSplashEvent;
+import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.projectiles.ProjectileSource;
@@ -30,18 +32,26 @@ public final class EventListener implements Listener {
     private void onAttack(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player)) return;
 
-        Player player = (Player) event.getDamager();
+        Player attacker = (Player) event.getDamager();
 
-        PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
-        if (data == null) return;
+        PlayerData attackerData = plugin.getDataManager().getData(attacker.getUniqueId());
+        if (attackerData == null) return;
 
         int tick = plugin.getTick();
 
         if (event.getEntity() instanceof Player) {
-            data.setTarget((Player) event.getEntity());
+            Player victim = (Player) event.getEntity();
+
+            attackerData.setTarget(victim);
+
+            PlayerData victimData = plugin.getDataManager().getData(victim.getUniqueId());
+
+            if (victimData != null) {
+                victimData.setAttacker(attacker);
+            }
         }
 
-        data.setLastAttackTick(tick);
+        attackerData.setLastAttackTick(tick);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -51,7 +61,7 @@ public final class EventListener implements Listener {
         Player victim = (Player) event.getEntity();
         PlayerData victimData = plugin.getDataManager().getData(victim.getUniqueId());
 
-        if (victimData == null || victimData.isFilter()) return;
+        if (victimData == null || victimData.isExcluded()) return;
 
         int tick = plugin.getTick();
 
@@ -97,6 +107,8 @@ public final class EventListener implements Listener {
 
             deltaX = random;
             deltaZ = random;
+
+            victimData.sendDebugMessage("距离过近, 随机击退方向");
         }
 
         float radianYaw = attacker.getLocation().getYaw() * 0.017453292F;
@@ -110,7 +122,7 @@ public final class EventListener implements Listener {
         // 玩家发送的数据包地面状态, 可被外挂欺骗
         boolean onGround = victimData.isOnGround();
 
-        FileConfiguration config = plugin.getKbFile().getKbMap().get(victimData.getKbFilename()).getValue();
+        FileConfiguration config = plugin.getKbFile().getKbMap().get(victimData.getProfile()).getValue();
 
         // 地面击退
         double hor_ground = config.getDouble("horizontal.ground");
@@ -213,6 +225,58 @@ public final class EventListener implements Listener {
 
         // 清空缓存的击退
         data.setVelocity(null);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    private void onProjectileLaunch(ProjectileLaunchEvent event) {
+        if (event.getEntityType() != EntityType.SPLASH_POTION) return;
+
+        Projectile projectile = event.getEntity();
+        ProjectileSource shooter = projectile.getShooter();
+
+        if (!(shooter instanceof Player)) return;
+        Player player = (Player) shooter;
+
+        PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
+        if (data == null) return;
+
+        FileConfiguration config = plugin.getKbFile().getKbMap().get(data.getProfile()).getValue();
+
+        boolean enabled = config.getBoolean("potion.enabled");
+
+        if (enabled && data.isSprinting()) {
+            Vector original = projectile.getVelocity();
+
+            double horizontal = config.getDouble("potion.horizontal_multiplier");
+            double vertical = config.getDouble("potion.vertical_multiplier");
+
+            Vector velocity = new Vector(
+                    original.getX() * horizontal,
+                    original.getY() * vertical,
+                    original.getZ() * horizontal
+            );
+
+            projectile.setVelocity(velocity);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    private void onPotionSplash(PotionSplashEvent event) {
+        if (!(event.getEntity().getShooter() instanceof Player)) return;
+        Player player = (Player) event.getEntity().getShooter();
+
+        PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
+        if (data == null) return;
+
+        FileConfiguration config = plugin.getKbFile().getKbMap().get(data.getProfile()).getValue();
+
+        double intensity = event.getIntensity(player);
+        double compensation = config.getDouble("potion.compensation_multiplier");
+        double finalIntensity = Math.max(0.0, Math.min(1.0, intensity * compensation));
+
+        event.setIntensity(player, finalIntensity);
+
+        data.sendDebugMessage(String.format("喷溅型药水命中强度: 原始=%.3f, 最终=%.3f", intensity, finalIntensity));
     }
 
     @EventHandler

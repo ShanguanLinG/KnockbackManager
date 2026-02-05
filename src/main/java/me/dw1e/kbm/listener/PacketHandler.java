@@ -61,10 +61,7 @@ public final class PacketHandler extends PacketAdapter {
         UUID viewerUUID = viewer.getUniqueId();
 
         PlayerData viewerData = plugin.getDataManager().getData(viewerUUID);
-        if (viewerData == null || viewerData.isFilter()) return;
-
-        Player target = viewerData.getTarget();
-        if (target == null) return;
+        if (viewerData == null || viewerData.isExcluded()) return;
 
         PacketContainer packet = event.getPacket();
         StructureModifier<Integer> integers = packet.getIntegers();
@@ -72,19 +69,25 @@ public final class PacketHandler extends PacketAdapter {
         int entityId = integers.read(0);
         if (entityId == viewer.getEntityId()) return;
 
-        FileConfiguration config = plugin.getKbFile().getKbMap().get(viewerData.getKbFilename()).getValue();
+        FileConfiguration config = plugin.getKbFile().getKbMap().get(viewerData.getProfile()).getValue();
 
         int tick = plugin.getTick();
-
-        boolean exempt = tick - viewerData.getLastAttackedByOtherTick() > viewer.getMaximumNoDamageTicks() / 2
-                || tick - viewerData.getLastAttackTick() <= target.getMaximumNoDamageTicks() / 2;
+        int lastAttackTick = viewerData.getLastAttackTick();
+        int lastAttackedByOtherTick = viewerData.getLastAttackedByOtherTick();
+        int noDamageTicks = viewer.getMaximumNoDamageTicks();
 
         // 处理错位
         process_misplace:
         {
             if (!config.getBoolean("packet.misplace.enabled")
                     || !event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
-                    || entityId != target.getEntityId() || exempt
+            ) break process_misplace;
+
+            Player target = viewerData.getTarget();
+
+            if (target == null || entityId != target.getEntityId()
+                    || tick - lastAttackedByOtherTick <= (noDamageTicks / 2) + 3
+                    || tick - lastAttackTick > (noDamageTicks / 2) + 3
             ) break process_misplace;
 
             double multiplier = plugin.isAtLeast1_17() ? 1024.0D : 32.0D;
@@ -121,9 +124,13 @@ public final class PacketHandler extends PacketAdapter {
                 if (set.remove(key)) break process_delay;
             }
 
-            if (!config.getBoolean("packet.delay.enabled")
-                    //|| event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
-                    || entityId != target.getEntityId() || exempt
+            if (!config.getBoolean("packet.delay.enabled")) break process_delay;
+
+            Player attacker = viewerData.getAttacker();
+
+            if (attacker == null || entityId != attacker.getEntityId()
+                    || tick - lastAttackedByOtherTick > noDamageTicks
+                    || tick - lastAttackTick <= noDamageTicks
             ) break process_delay;
 
             int delay = Math.max(1, config.getInt("packet.delay.ticks"));

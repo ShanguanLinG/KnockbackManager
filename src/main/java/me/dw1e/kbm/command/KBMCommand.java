@@ -24,7 +24,9 @@ public final class KBMCommand implements TabExecutor {
             "horizontal.ground", "horizontal.air", "horizontal.sprint_extra", "horizontal.projectile_multiplier",
             "vertical.ground", "vertical.air", "vertical.sprint_extra", "vertical.projectile_multiplier",
             "packet.misplace.enabled", "packet.misplace.distance", "packet.delay.enabled", "packet.delay.ticks",
-            "stop_sprint", "y_limit", "hit_delay");
+            "stop_sprint", "y_limit", "hit_delay",
+            "potion.enabled", "potion.horizontal_multiplier", "potion.vertical_multiplier", "potion.compensation_multiplier"
+    );
 
     public KBMCommand(KnockbackManager plugin) {
         this.plugin = plugin;
@@ -36,7 +38,7 @@ public final class KBMCommand implements TabExecutor {
 
         if (args.length == 1) {
             return filterStartingWith(Arrays.asList(
-                    "create", "delete", "list", "edit", "view", "reload", "getkb", "setkb", "filter", "help"
+                    "create", "delete", "list", "edit", "view", "reload", "getprofile", "setprofile", "setexcluded", "help", "debug"
             ), args[0]);
         }
 
@@ -61,22 +63,23 @@ public final class KBMCommand implements TabExecutor {
                         case "stop_sprint":
                         case "packet.misplace.enabled":
                         case "packet.delay.enabled":
+                        case "potion.enabled":
                             return filterStartingWith(Arrays.asList("true", "false"), args[3]);
                     }
                 }
                 break;
             }
-            case "filter":
-            case "getkb":
-            case "setkb": {
+            case "setexcluded":
+            case "getprofile":
+            case "setprofile": {
                 if (args.length == 2) {
                     return filterStartingWith(onlinePlayers, args[1]);
 
                 } else if (args.length == 3) {
-                    if (subCmd.equals("filter")) {
+                    if (subCmd.equals("setexcluded")) {
                         return filterStartingWith(Arrays.asList("true", "false"), args[2]);
 
-                    } else if (subCmd.equals("setkb")) {
+                    } else if (subCmd.equals("setprofile")) {
                         return filterStartingWith(fileNames, args[2]);
                     }
                 }
@@ -107,7 +110,7 @@ public final class KBMCommand implements TabExecutor {
         }
 
         switch (args[0].toLowerCase()) {
-            case "help":
+            case "help": {
                 String same = "§f  /" + label;
 
                 sender.sendMessage(prefix + " §7可用命令:");
@@ -118,14 +121,16 @@ public final class KBMCommand implements TabExecutor {
                 sender.sendMessage(same + " edit§7: 编辑KB文件的数值");
                 sender.sendMessage(same + " view§7: 查看KB文件的数值");
                 sender.sendMessage(same + " reload§7: 重新加载KB文件");
-                sender.sendMessage(same + " getkb§7: 查看玩家使用的KB文件");
-                sender.sendMessage(same + " setkb§7: 设置玩家使用的KB文件");
-                sender.sendMessage(same + " filter§7: 过滤玩家");
+                sender.sendMessage(same + " getprofile§7: 查看玩家使用的KB文件");
+                sender.sendMessage(same + " setprofile§7: 设置玩家使用的KB文件");
+                sender.sendMessage(same + " setexcluded§7: 设置玩家是否该被排除修改");
+                sender.sendMessage(same + " debug§7: 开启/关闭调试模式");
 
                 sender.sendMessage("§a使用教程&参考配置: 请见群(673765463)文件");
 
                 return true;
-            case "create":
+            }
+            case "create": {
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " create <KB文件名>");
                     return true;
@@ -134,7 +139,8 @@ public final class KBMCommand implements TabExecutor {
                 plugin.getKbFile().create(args[1], sender);
 
                 return true;
-            case "delete":
+            }
+            case "delete": {
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " delete <KB文件名>");
                     return true;
@@ -143,12 +149,14 @@ public final class KBMCommand implements TabExecutor {
                 plugin.getKbFile().delete(args[1], sender);
 
                 return true;
-            case "list":
+            }
+            case "list": {
                 sender.sendMessage(prefix + " §7已读取的KB文件:");
 
                 plugin.getKbFile().getKbMap().keySet().forEach(filename -> sender.sendMessage("  §f" + filename));
 
                 return true;
+            }
             case "edit": {
                 if (args.length != 4) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " edit <KB文件名> <类型> <数值>");
@@ -174,7 +182,8 @@ public final class KBMCommand implements TabExecutor {
                 switch (type) {
                     case "packet.misplace.enabled":
                     case "packet.delay.enabled":
-                    case "stop_sprint": {
+                    case "stop_sprint":
+                    case "potion.enabled": {
                         boolean value;
 
                         String input = args[3].toLowerCase();
@@ -275,7 +284,7 @@ public final class KBMCommand implements TabExecutor {
 
                 return true;
             }
-            case "reload":
+            case "reload": {
                 if (args.length != 2) {
                     sender.sendMessage(prefix + " §c用法: /" + label + " reload <KB文件名|*>");
                     return true;
@@ -284,9 +293,10 @@ public final class KBMCommand implements TabExecutor {
                 plugin.getKbFile().reload(args[1], sender);
 
                 return true;
-            case "getkb": {
+            }
+            case "getprofile": {
                 if (args.length != 2) {
-                    sender.sendMessage(prefix + " §c用法: /" + label + " getkb <玩家>");
+                    sender.sendMessage(prefix + " §c用法: /" + label + " getprofile <玩家>");
                     return true;
                 }
 
@@ -299,14 +309,14 @@ public final class KBMCommand implements TabExecutor {
 
                 PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
 
-                sender.sendMessage(prefix + (data.isFilter() ? " §c" + player.getName() + " 当前位于过滤名单中!"
-                        : " §f" + player.getName() + " §7当前使用的KB为: §f" + data.getKbFilename()));
+                sender.sendMessage(prefix + (data.isExcluded() ? " §c" + player.getName() + " 当前位于过滤名单中!"
+                        : " §f" + player.getName() + " §7当前使用的KB为: §f" + data.getProfile()));
 
                 return true;
             }
-            case "setkb": {
+            case "setprofile": {
                 if (args.length != 3) {
-                    sender.sendMessage(prefix + " §c用法: /" + label + " setkb <玩家|*> <KB文件名>");
+                    sender.sendMessage(prefix + " §c用法: /" + label + " setprofile <玩家|*> <KB文件名>");
                     return true;
                 }
 
@@ -316,7 +326,7 @@ public final class KBMCommand implements TabExecutor {
                 }
 
                 if (args[1].equals("*")) {
-                    plugin.getDataManager().getAllData().forEach(data -> data.setKbFilename(args[2]));
+                    plugin.getDataManager().getAllData().forEach(data -> data.setProfile(args[2]));
 
                     sender.sendMessage(prefix + " §7已将所有玩家使用的KB设置为 §f" + args[2]);
 
@@ -332,20 +342,20 @@ public final class KBMCommand implements TabExecutor {
 
                 PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
 
-                if (data.getKbFilename().equals(args[2])) {
+                if (data.getProfile().equals(args[2])) {
                     sender.sendMessage(prefix + " §c无变化. " + player.getName() + " 原已使用 " + args[2]);
                     return true;
                 }
 
-                data.setKbFilename(args[2]);
+                data.setProfile(args[2]);
 
                 sender.sendMessage(prefix + " §7已将 §f" + player.getName() + " §7使用的KB设置为 §f" + args[2]);
 
                 return true;
             }
-            case "filter": {
+            case "setexcluded": {
                 if (args.length != 3) {
-                    sender.sendMessage(prefix + " §c用法: /" + label + " filter <玩家> <true/false>");
+                    sender.sendMessage(prefix + " §c用法: /" + label + " setexcluded <玩家> <true/false>");
                     return true;
                 }
 
@@ -368,14 +378,30 @@ public final class KBMCommand implements TabExecutor {
 
                 PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
 
-                if (data.isFilter() == value) {
-                    sender.sendMessage(prefix + " §c无变化. " + player.getName() + " 原已" + (value ? "加入" : "移出") + "过滤名单!");
+                if (data.isExcluded() == value) {
+                    sender.sendMessage(prefix + " §c无变化. " + player.getName() + " 原已" + (value ? "加入" : "移出") + "排除名单!");
                     return true;
                 }
 
-                data.setFilter(value);
+                data.setExcluded(value);
 
-                sender.sendMessage(prefix + " §7已将 §f" + player.getName() + " " + (value ? "§a加入" : "§c移出") + " §f过滤名单!");
+                sender.sendMessage(prefix + " §7已将 §f" + player.getName() + " " + (value ? "§a加入" : "§c移出") + " §f排除名单!");
+
+                return true;
+            }
+            case "debug": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(prefix + " §c此命令仅玩家可使用!");
+                    return true;
+                }
+
+                Player player = (Player) sender;
+
+                PlayerData data = KnockbackManager.getInstance().getDataManager().getData(player.getUniqueId());
+
+                data.setDebugging(!data.isDebugging());
+
+                sender.sendMessage(prefix + " §f调试模式现已" + (data.isDebugging() ? "§a开启" : "§c关闭") + "§f!");
 
                 return true;
             }
@@ -391,9 +417,10 @@ public final class KBMCommand implements TabExecutor {
 
                 return true;
             }
-            default:
+            default: {
                 sender.sendMessage(prefix + " §c未知子命令: " + args[0]);
                 return true;
+            }
         }
     }
 

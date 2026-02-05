@@ -17,30 +17,66 @@ public final class DefaultKnockbackManagerAPI implements KnockbackManagerAPI {
         return plugin.getDataManager().getData(player.getUniqueId());
     }
 
+    @Override
     public boolean isKBFileExist(String filename) {
-        return plugin.getKbFile().getKbMap().containsKey(filename);
+        return isProfileExists(filename);
     }
 
+    @Override
     public String getKBFile(Player player) {
-        return getData(player).getKbFilename();
+        return getProfile(player);
     }
 
+    @Override
     public boolean setKBFile(Player player, String filename) {
-        if (!isKBFileExist(filename)) return false;
+        return setProfile(player, filename);
+    }
 
-        getData(player).setKbFilename(filename);
+    @Override
+    public boolean isFilter(Player player) {
+        return isModificationExcluded(player);
+    }
+
+    @Override
+    public void setFilter(Player player, boolean toggle) {
+        setModificationExcluded(player, toggle);
+    }
+
+    @Override
+    public FileConfiguration getKBConfig(String filename) {
+        return getProfileConfig(filename);
+    }
+
+    @Override
+    public boolean isProfileExists(String profileName) {
+        return plugin.getKbFile().getKbMap().containsKey(profileName);
+    }
+
+    @Override
+    public String getProfile(Player player) {
+        return getData(player).getProfile();
+    }
+
+    @Override
+    public boolean setProfile(Player player, String profileName) {
+        if (!isProfileExists(profileName)) return false;
+
+        getData(player).setProfile(profileName);
         return true;
     }
 
-    public boolean isFilter(Player player) {
-        return getData(player).isFilter();
+    @Override
+    public boolean isModificationExcluded(Player player) {
+        return getData(player).isExcluded();
     }
 
-    public void setFilter(Player player, boolean toggle) {
-        getData(player).setFilter(toggle);
+    @Override
+    public void setModificationExcluded(Player player, boolean managed) {
+        getData(player).setExcluded(managed);
     }
 
-    public FileConfiguration getKBConfig(String filename) {
-        return isKBFileExist(filename) ? plugin.getKbFile().getKbMap().get(filename).getValue() : null;
+    @Override
+    public FileConfiguration getProfileConfig(String profileName) {
+        return isProfileExists(profileName) ? plugin.getKbFile().getKbMap().get(profileName).getValue() : null;
     }
 }

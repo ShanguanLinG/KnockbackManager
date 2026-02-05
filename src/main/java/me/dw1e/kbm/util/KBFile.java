@@ -143,8 +143,8 @@ public final class KBFile {
         }
 
         plugin.getDataManager().getAllData().stream()
-                .filter(data -> data.getKbFilename().equals(filename))
-                .forEach(data -> data.setKbFilename("default"));
+                .filter(data -> data.getProfile().equals(filename))
+                .forEach(data -> data.setProfile("default"));
 
         sender.sendMessage(KnockbackManager.PREFIX + (kbMap.get(filename).getKey().delete()
                 ? " §a删除 " + filename + " 成功!" : " §c删除 " + filename + " 失败!"));
@@ -171,8 +171,8 @@ public final class KBFile {
             load(sender);
 
             plugin.getDataManager().getAllData().stream()
-                    .filter(data -> !kbMap.containsKey(data.getKbFilename()))
-                    .forEach(data -> data.setKbFilename("default"));
+                    .filter(data -> !kbMap.containsKey(data.getProfile()))
+                    .forEach(data -> data.setProfile("default"));
 
             sender.sendMessage(KnockbackManager.PREFIX + " §a已重载所有KB文件!");
             return;

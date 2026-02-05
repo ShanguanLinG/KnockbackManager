@@ -1,5 +1,6 @@
 package me.dw1e.kbm.data;
 
+import me.dw1e.kbm.KnockbackManager;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -7,27 +8,30 @@ public final class PlayerData {
 
     private final Player player;
 
-    private String kbFilename = "default";
+    private String profile = "default";
     private Vector velocity = null;
 
-    private boolean sprinting, filter;
+    private boolean excluded;
+    private boolean debugging;
+
+    private boolean sprinting;
     private double lastGroundY;
 
     private int lastAttackTick, lastAttackedByOtherTick;
 
-    private Player target;
+    private Player target, attacker;
 
     public PlayerData(Player player) {
         this.player = player;
         lastGroundY = player.getLocation().getY();
     }
 
-    public String getKbFilename() {
-        return kbFilename;
+    public String getProfile() {
+        return profile;
     }
 
-    public void setKbFilename(String kbFilename) {
-        this.kbFilename = kbFilename;
+    public void setProfile(String profile) {
+        this.profile = profile;
     }
 
     @SuppressWarnings("deprecation")
@@ -43,13 +47,21 @@ public final class PlayerData {
         this.sprinting = sprinting;
     }
 
-    public boolean isFilter() {
-        return filter;
+    public boolean isExcluded() {
+        return excluded;
     }
 
-    public void setFilter(boolean filter) {
-        this.filter = filter;
+    public void setExcluded(boolean excluded) {
+        this.excluded = excluded;
         player.setMaximumNoDamageTicks(20);
+    }
+
+    public boolean isDebugging() {
+        return debugging;
+    }
+
+    public void setDebugging(boolean debugging) {
+        this.debugging = debugging;
     }
 
     public double getLastGroundY() {
@@ -90,5 +102,17 @@ public final class PlayerData {
 
     public void setTarget(Player target) {
         this.target = target;
+    }
+
+    public Player getAttacker() {
+        return attacker;
+    }
+
+    public void setAttacker(Player attacker) {
+        this.attacker = attacker;
+    }
+
+    public void sendDebugMessage(String message) {
+        if (debugging) player.sendMessage(KnockbackManager.PREFIX + " §8[§3Debug§8] §7" + message);
     }
 }
