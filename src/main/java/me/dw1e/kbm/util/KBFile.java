@@ -70,6 +70,8 @@ public final class KBFile {
             // 限制最大数值
             fileConfig.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, fileConfig.getDouble("packet.misplace.distance"))));
             fileConfig.set("packet.delay.ticks", Math.max(1, Math.min(5, fileConfig.getInt("packet.delay.ticks"))));
+            fileConfig.set("potion.horizontal_multiplier", Math.max(-8.0, Math.min(8.0, fileConfig.getDouble("potion.horizontal_multiplier"))));
+            fileConfig.set("potion.vertical_multiplier", Math.max(-7.0, Math.min(7.0, fileConfig.getDouble("potion.vertical_multiplier"))));
 
             // 删除无用的数值
             fileConfig.getKeys(true).stream()

@@ -18,31 +18,6 @@ public final class DefaultKnockbackManagerAPI implements KnockbackManagerAPI {
     }
 
     @Override
-    public boolean isKBFileExist(String filename) {
-        return isProfileExists(filename);
-    }
-
-    @Override
-    public String getKBFile(Player player) {
-        return getProfile(player);
-    }
-
-    @Override
-    public boolean setKBFile(Player player, String filename) {
-        return setProfile(player, filename);
-    }
-
-    @Override
-    public boolean isFilter(Player player) {
-        return isModificationExcluded(player);
-    }
-
-    @Override
-    public void setFilter(Player player, boolean toggle) {
-        setModificationExcluded(player, toggle);
-    }
-
-    @Override
     public FileConfiguration getKBConfig(String filename) {
         return getProfileConfig(filename);
     }

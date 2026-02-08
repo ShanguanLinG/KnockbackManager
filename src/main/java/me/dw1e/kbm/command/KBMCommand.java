@@ -18,15 +18,15 @@ import java.util.stream.Collectors;
 
 public final class KBMCommand implements TabExecutor {
 
-    private final KnockbackManager plugin;
-
-    private final List<String> types = Arrays.asList(
+    private static final List<String> TYPES = Arrays.asList(
             "horizontal.ground", "horizontal.air", "horizontal.sprint_extra", "horizontal.projectile_multiplier",
             "vertical.ground", "vertical.air", "vertical.sprint_extra", "vertical.projectile_multiplier",
             "packet.misplace.enabled", "packet.misplace.distance", "packet.delay.enabled", "packet.delay.ticks",
-            "stop_sprint", "y_limit", "hit_delay",
+            "stop_sprint", "y_limit", "hit_delay", "projectile_direction_override",
             "potion.enabled", "potion.horizontal_multiplier", "potion.vertical_multiplier", "potion.compensation_multiplier"
     );
+
+    private final KnockbackManager plugin;
 
     public KBMCommand(KnockbackManager plugin) {
         this.plugin = plugin;
@@ -38,7 +38,8 @@ public final class KBMCommand implements TabExecutor {
 
         if (args.length == 1) {
             return filterStartingWith(Arrays.asList(
-                    "create", "delete", "list", "edit", "view", "reload", "getprofile", "setprofile", "setexcluded", "help", "debug"
+                    "create", "delete", "list", "edit", "view", "reload",
+                    "getprofile", "setprofile", "setexcluded", "help", "debug"
             ), args[0]);
         }
 
@@ -56,13 +57,14 @@ public final class KBMCommand implements TabExecutor {
                     return filterStartingWith(fileNames, args[1]);
 
                 } else if (args.length == 3 && subCmd.equals("edit")) {
-                    return filterStartingWith(types, args[2]);
+                    return filterStartingWith(TYPES, args[2]);
 
                 } else if (args.length == 4) {
                     switch (args[2].toLowerCase()) {
-                        case "stop_sprint":
                         case "packet.misplace.enabled":
                         case "packet.delay.enabled":
+                        case "stop_sprint":
+                        case "projectile_direction_override":
                         case "potion.enabled":
                             return filterStartingWith(Arrays.asList("true", "false"), args[3]);
                     }
@@ -174,7 +176,7 @@ public final class KBMCommand implements TabExecutor {
 
                 String type = args[2].toLowerCase();
 
-                if (!types.contains(type)) {
+                if (!TYPES.contains(type)) {
                     sender.sendMessage(prefix + " §c无效的类型: " + args[2]);
                     return true;
                 }
@@ -183,6 +185,7 @@ public final class KBMCommand implements TabExecutor {
                     case "packet.misplace.enabled":
                     case "packet.delay.enabled":
                     case "stop_sprint":
+                    case "projectile_direction_override":
                     case "potion.enabled": {
                         boolean value;
 
@@ -245,6 +248,12 @@ public final class KBMCommand implements TabExecutor {
 
                         if (type.equals("packet.misplace.distance") && (value < 0.0 || value > 1.0)) {
                             sender.sendMessage(prefix + " §c不在范围(0.0~1.0)内的数值: " + value);
+                            return true;
+                        } else if (type.equals("potion.horizontal_multiplier") && (value < -8.0 || value > 8.0)) {
+                            sender.sendMessage(prefix + " §c不在范围(-8.0~8.0)内的数值: " + value);
+                            return true;
+                        } else if (type.equals("potion.vertical_multiplier") && (value < -7.0 || value > 7.0)) {
+                            sender.sendMessage(prefix + " §c不在范围(-7.0~7.0)内的数值: " + value);
                             return true;
                         }
 
@@ -434,8 +443,12 @@ public final class KBMCommand implements TabExecutor {
                 builder.append("§e").append(indent).append(key).append("§f").append(":\n");
 
                 formatConfigSection(builder, section.getConfigurationSection(key), indentLV + 1);
-            } else builder.append("§7").append(indent).append(key)
-                    .append("§f").append(": ").append(section.get(key)).append("\n");
+
+            } else {
+                builder.append("§7").append(indent).append(key)
+                        .append("§f").append(": ").append(section.get(key))
+                        .append("\n");
+            }
         }
     }
 }

@@ -61,6 +61,11 @@ y_limit: 0.675 # (单位: 格)
 hit_delay: 20 # (单位: 游戏刻)
 
 # ============================
+# 是否使用投掷物发射者的位置来计算击退方向
+# ============================
+projectile_direction_override: false
+
+# ============================
 # 投掷出的喷溅型药水的运动修改
 # ============================
 potion:
@@ -71,4 +76,4 @@ potion:
   # 药水的垂直方向运动的乘以倍数
   vertical_multiplier: 1.0
   # 药水命中自身时的强度补偿倍数
-  compensation_multiplier: 1.1
+  compensation_multiplier: 1.15

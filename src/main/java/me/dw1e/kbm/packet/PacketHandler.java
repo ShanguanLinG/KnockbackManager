@@ -1,4 +1,4 @@
-package me.dw1e.kbm.listener;
+package me.dw1e.kbm.packet;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -18,12 +18,12 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class PacketHandler extends PacketAdapter {
 
-    private static final List<PacketType> MISPLACED_PACKETS = Arrays.asList(
+    private static final Set<PacketType> PACKETS = new HashSet<>(Arrays.asList(
             PacketType.Play.Server.ENTITY_TELEPORT,
             PacketType.Play.Server.REL_ENTITY_MOVE_LOOK,
             PacketType.Play.Server.REL_ENTITY_MOVE,
             PacketType.Play.Server.ENTITY_LOOK
-    );
+    ));
 
     private final KnockbackManager plugin;
 
@@ -31,7 +31,7 @@ public final class PacketHandler extends PacketAdapter {
     private final Map<UUID, Set<String>> expectedPackets = new ConcurrentHashMap<>();
 
     public PacketHandler(KnockbackManager plugin) {
-        super(plugin, ListenerPriority.LOWEST, MISPLACED_PACKETS);
+        super(plugin, ListenerPriority.LOWEST, PACKETS);
         this.plugin = plugin;
     }
 
@@ -55,7 +55,7 @@ public final class PacketHandler extends PacketAdapter {
 
     @Override
     public void onPacketSending(PacketEvent event) {
-        if (!MISPLACED_PACKETS.contains(event.getPacketType())) return;
+        if (!PACKETS.contains(event.getPacketType())) return;
 
         Player viewer = event.getPlayer();
         UUID viewerUUID = viewer.getUniqueId();
@@ -167,6 +167,7 @@ public final class PacketHandler extends PacketAdapter {
 
                 expectedPackets.computeIfAbsent(uuid, k -> ConcurrentHashMap.newKeySet()).add(key);
 
+                // 不要直接在最后面设置 filters: true, 不然其它使用 ProtocolLib 的插件不会收到你新发的包!
                 ProtocolLibrary.getProtocolManager().sendServerPacket(queued.player, queued.packet);
 
                 queue.pollFirst();
