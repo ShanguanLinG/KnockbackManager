@@ -1,9 +1,9 @@
 package me.dw1e.kbm.listener;
 
 import me.dw1e.kbm.KnockbackManager;
+import me.dw1e.kbm.config.KBProfile;
 import me.dw1e.kbm.data.PlayerData;
 import me.dw1e.kbm.util.MathUtil;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
@@ -36,18 +36,15 @@ public final class PotionListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.isExcluded()) return;
 
-        FileConfiguration config = plugin.getKbFile().getConfig(data.getProfile());
+        KBProfile profile = plugin.getKbFile().getProfile(data.getProfile());
 
-        if (config.getBoolean("potion.enabled") && data.isSprinting()) {
+        if (profile.POTION_ENABLED && data.isSprinting()) {
             Vector originalVel = projectile.getVelocity();
 
-            double horizontal = config.getDouble("potion.horizontal_multiplier");
-            double vertical = config.getDouble("potion.vertical_multiplier");
-
             Vector finalVel = new Vector(
-                    originalVel.getX() * horizontal,
-                    originalVel.getY() * vertical,
-                    originalVel.getZ() * horizontal
+                    originalVel.getX() * profile.POTION_HORIZONTAL_MULTIPLIER,
+                    originalVel.getY() * profile.POTION_VERTICAL_MULTIPLIER,
+                    originalVel.getZ() * profile.POTION_HORIZONTAL_MULTIPLIER
             );
 
             projectile.setVelocity(finalVel);
@@ -70,12 +67,11 @@ public final class PotionListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.isExcluded()) return;
 
-        FileConfiguration config = plugin.getKbFile().getConfig(data.getProfile());
+        KBProfile profile = plugin.getKbFile().getProfile(data.getProfile());
 
-        if (config.getBoolean("potion.enabled")) {
+        if (profile.POTION_ENABLED) {
             double intensity = event.getIntensity(player);
-            double compensation = config.getDouble("potion.compensation_multiplier");
-            double finalIntensity = Math.max(0.0, Math.min(1.0, intensity * compensation));
+            double finalIntensity = Math.max(0.0, Math.min(1.0, intensity * profile.POTION_COMPENSATION_MULTIPLIER));
 
             event.setIntensity(player, finalIntensity);
 

@@ -1,50 +1,43 @@
 package me.dw1e.kbm.config;
 
-import me.dw1e.kbm.KnockbackManager;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public final class KBProfile {
 
-    public static double HORIZONTAL_GROUND;
-    public static double HORIZONTAL_AIR;
-    public static double HORIZONTAL_SPRINT_EXTRA;
+    public double HORIZONTAL_GROUND;
+    public double HORIZONTAL_AIR;
+    public double HORIZONTAL_SPRINT_EXTRA;
 
-    public static double VERTICAL_GROUND;
-    public static double VERTICAL_AIR;
-    public static double VERTICAL_SPRINT_EXTRA;
+    public double VERTICAL_GROUND;
+    public double VERTICAL_AIR;
+    public double VERTICAL_SPRINT_EXTRA;
 
-    public static boolean PROJECTILE_ENABLED;
-    public static double PROJECTILE_HORIZONTAL_MULTIPLIER;
-    public static double PROJECTILE_VERTICAL_MULTIPLIER;
-    public static boolean PROJECTILE_DIRECTION_OVERRIDE;
+    public boolean PROJECTILE_ENABLED;
+    public double PROJECTILE_HORIZONTAL_MULTIPLIER;
+    public double PROJECTILE_VERTICAL_MULTIPLIER;
+    public boolean PROJECTILE_DIRECTION_OVERRIDE;
 
-    public static boolean PACKET_MISPLACE_ENABLED;
-    public static double PACKET_MISPLACE_DISTANCE;
-    public static boolean PACKET_DELAY_ENABLED;
-    public static int PACKET_DELAY_TICKS;
+    public boolean PACKET_MISPLACE_ENABLED;
+    public double PACKET_MISPLACE_DISTANCE;
+    public boolean PACKET_DELAY_ENABLED;
+    public int PACKET_DELAY_TICKS;
 
-    public static boolean STOP_SPRINT;
+    public boolean STOP_SPRINT;
 
-    public static double Y_LIMIT;
+    public double Y_LIMIT;
 
-    public static int HIT_DELAY;
+    public int HIT_DELAY;
 
-    public static boolean POTION_ENABLED;
-    public static double POTION_HORIZONTAL_MULTIPLIER;
-    public static double POTION_VERTICAL_MULTIPLIER;
-    public static double POTION_COMPENSATION_MULTIPLIER;
+    public boolean POTION_ENABLED;
+    public double POTION_HORIZONTAL_MULTIPLIER;
+    public double POTION_VERTICAL_MULTIPLIER;
+    public double POTION_COMPENSATION_MULTIPLIER;
 
-    private final String name;
-
-    public KBProfile(String name) {
-        this.name = name;
-
-        updateConfig();
+    public KBProfile(FileConfiguration config) {
+        updateConfig(config);
     }
 
-    public void updateConfig() {
-        FileConfiguration config = KnockbackManager.getInstance().getKbFile().getConfig(name);
-
+    public void updateConfig(FileConfiguration config) {
         HORIZONTAL_GROUND = config.getDouble("horizontal.ground");
         HORIZONTAL_AIR = config.getDouble("horizontal.air");
         HORIZONTAL_SPRINT_EXTRA = config.getDouble("horizontal.sprint_extra");
@@ -73,9 +66,5 @@ public final class KBProfile {
         POTION_HORIZONTAL_MULTIPLIER = config.getDouble("potion.horizontal_multiplier");
         POTION_VERTICAL_MULTIPLIER = config.getDouble("potion.vertical_multiplier");
         POTION_COMPENSATION_MULTIPLIER = config.getDouble("potion.compensation_multiplier");
-    }
-
-    public String getName() {
-        return name;
     }
 }

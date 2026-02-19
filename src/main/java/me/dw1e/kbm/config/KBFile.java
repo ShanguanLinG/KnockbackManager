@@ -1,6 +1,7 @@
-package me.dw1e.kbm.util;
+package me.dw1e.kbm.config;
 
 import me.dw1e.kbm.KnockbackManager;
+import me.dw1e.kbm.util.Pair;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,6 +22,7 @@ public final class KBFile {
     private final KnockbackManager plugin;
     private final FileConfiguration defaultConfig;
     private final Map<String, Pair<File, FileConfiguration>> kbMap = new HashMap<>();
+    private final Map<String, KBProfile> kbProfileMap = new HashMap<>();
 
     public KBFile(KnockbackManager plugin) {
         this.plugin = plugin;
@@ -94,6 +96,8 @@ public final class KBFile {
                         }
                     });
 
+            kbProfileMap.put(filename, new KBProfile(fileConfig));
+
             try {
                 fileConfig.save(pair.getKey());
             } catch (IOException e) {
@@ -134,6 +138,7 @@ public final class KBFile {
         }
 
         kbMap.put(filename, new Pair<>(file, fileConfig));
+        kbProfileMap.put(filename, new KBProfile(fileConfig));
 
         sender.sendMessage(KnockbackManager.PREFIX + " §a创建 " + filename + " 成功!");
     }
@@ -156,6 +161,7 @@ public final class KBFile {
         sender.sendMessage(KnockbackManager.PREFIX + (kbMap.get(filename).getKey().delete()
                 ? " §a删除 " + filename + " 成功!" : " §c删除 " + filename + " 失败!"));
 
+        kbProfileMap.remove(filename);
         kbMap.remove(filename);
     }
 
@@ -167,6 +173,7 @@ public final class KBFile {
 
         try {
             kbMap.get(filename).getValue().save(kbMap.get(filename).getKey());
+            kbProfileMap.get(filename).updateConfig(getConfig(filename));
         } catch (IOException e) {
             sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
@@ -192,6 +199,7 @@ public final class KBFile {
 
         try {
             kbMap.get(filename).getValue().load(kbMap.get(filename).getKey());
+            kbProfileMap.get(filename).updateConfig(getConfig(filename));
         } catch (InvalidConfigurationException | IOException e) {
             sender.sendMessage(KnockbackManager.PREFIX + " §c重载 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
@@ -206,5 +214,9 @@ public final class KBFile {
 
     public FileConfiguration getConfig(String name) {
         return kbMap.get(name).getValue();
+    }
+
+    public KBProfile getProfile(String name) {
+        return kbProfileMap.get(name);
     }
 }

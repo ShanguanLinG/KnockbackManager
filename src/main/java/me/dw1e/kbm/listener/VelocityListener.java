@@ -2,11 +2,11 @@ package me.dw1e.kbm.listener;
 
 import me.dw1e.kbm.KnockbackManager;
 import me.dw1e.kbm.api.event.KBMPlayerVelocityEvent;
+import me.dw1e.kbm.config.KBProfile;
 import me.dw1e.kbm.data.PlayerData;
 import me.dw1e.kbm.util.MathUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -41,7 +41,7 @@ public final class VelocityListener implements Listener {
         boolean isProjectileHit = false, isSelfShootHit = false;
         int arrowStrength = 0; // 弓箭上的'冲击'附魔等级
 
-        FileConfiguration config = plugin.getKbFile().getConfig(victimData.getProfile());
+        KBProfile profile = plugin.getKbFile().getProfile(victimData.getProfile());
 
         if (source instanceof LivingEntity) { // 玩家造成的击退
             attacker = (LivingEntity) source;
@@ -49,7 +49,7 @@ public final class VelocityListener implements Listener {
         } else if (source instanceof Projectile) { // 投掷物造成的击退
             if (source instanceof EnderPearl) return;
 
-            if (!config.getBoolean("projectile.enabled")) return; // 未启用投掷物击退修改
+            if (!profile.PROJECTILE_ENABLED) return; // 未启用投掷物击退修改
 
             ProjectileSource shooter = ((Projectile) source).getShooter();
 
@@ -87,10 +87,8 @@ public final class VelocityListener implements Listener {
 
         Vector velocity;
 
-        boolean proj_dir_override = config.getBoolean("projectile.direction_override");
-
         if (isSelfShootHit) { // Bow Boost 的击退
-            if (!proj_dir_override) {
+            if (!profile.PROJECTILE_DIRECTION_OVERRIDE) {
                 // 未开启覆盖: 使用投掷物自身的飞行方向
                 velocity = source.getVelocity().clone().normalize().setY(1.0);
             } else {
@@ -99,7 +97,7 @@ public final class VelocityListener implements Listener {
             }
 
         } else {
-            if (isProjectileHit && !proj_dir_override) {
+            if (isProjectileHit && !profile.PROJECTILE_DIRECTION_OVERRIDE) {
                 // 投掷物命中且未开启覆盖: 使用投掷物飞行方向
                 velocity = source.getVelocity().clone().normalize().setY(1.0);
             } else {
@@ -111,32 +109,22 @@ public final class VelocityListener implements Listener {
         // 玩家发送的数据包地面状态, 可被外挂欺骗
         boolean onGround = victimData.isOnGround();
 
-        // 地面击退
-        double hor_ground = config.getDouble("horizontal.ground");
-        double ver_ground = config.getDouble("vertical.ground");
-
-        // 空中击退
-        double hor_air = config.getDouble("horizontal.air");
-        double ver_air = config.getDouble("vertical.air");
-
         // 根据判断玩家是否在地面上来决定该应用哪个击退
-        double hor = onGround ? hor_ground : hor_air;
-        double ver = onGround ? ver_ground : ver_air;
+        double hor = onGround ? profile.HORIZONTAL_GROUND : profile.HORIZONTAL_AIR;
+        double ver = onGround ? profile.VERTICAL_GROUND : profile.VERTICAL_AIR;
 
         // 应用基础击退
         velocity.multiply(new Vector(hor, ver, hor));
-
-        double hor_sprint_extra = config.getDouble("horizontal.sprint_extra");
-        double ver_sprint_extra = config.getDouble("vertical.sprint_extra");
 
         PlayerData attackerData = plugin.getDataManager().getData(attacker.getUniqueId());
 
         // 投掷物造成的击退
         if (isProjectileHit) {
-            double proj_hor_mult = config.getDouble("projectile.horizontal_multiplier");
-            double proj_ver_mult = config.getDouble("projectile.vertical_multiplier");
-
-            velocity.multiply(new Vector(proj_hor_mult, proj_ver_mult, proj_hor_mult));
+            velocity.multiply(new Vector(
+                    profile.PROJECTILE_HORIZONTAL_MULTIPLIER,
+                    profile.PROJECTILE_VERTICAL_MULTIPLIER,
+                    profile.PROJECTILE_HORIZONTAL_MULTIPLIER)
+            );
 
             if (arrowStrength > 0) {
                 double adder = arrowStrength * 0.6F;
@@ -145,7 +133,7 @@ public final class VelocityListener implements Listener {
                 // 弓箭带有'击退'附魔时, 造成的垂直击退就是固定的 疾跑垂直击退
                 velocity.add(new Vector(
                         velocity.getX() * adder / dist,
-                        ver_sprint_extra,
+                        profile.VERTICAL_SPRINT_EXTRA,
                         velocity.getZ() * adder / dist)
                 );
             }
@@ -160,10 +148,9 @@ public final class VelocityListener implements Listener {
                 kbLevel = hand.getEnchantmentLevel(Enchantment.KNOCKBACK);
             }
 
-            boolean stop_sprint = config.getBoolean("stop_sprint");
             boolean sprinting = false;
 
-            if (stop_sprint) {
+            if (profile.STOP_SPRINT) {
                 if (attacker instanceof Player) {
                     // Bukkit 内部状态, 在一次攻击后会被服务器强制置为 false (需要疾跑重置)
                     sprinting = ((Player) attacker).isSprinting();
@@ -180,16 +167,17 @@ public final class VelocityListener implements Listener {
 
             if (kbLevel > 0) {
                 velocity.add(new Vector(
-                        -Math.sin(radianYaw) * kbLevel * hor_sprint_extra,
-                        ver_sprint_extra,
-                        Math.cos(radianYaw) * kbLevel * hor_sprint_extra
+                        -Math.sin(radianYaw) * kbLevel * profile.HORIZONTAL_SPRINT_EXTRA,
+                        profile.VERTICAL_SPRINT_EXTRA,
+                        Math.cos(radianYaw) * kbLevel * profile.HORIZONTAL_SPRINT_EXTRA
                 ));
             }
         }
 
         // Y 轴击退限制
-        double y_limit = config.getDouble("y_limit");
-        if (!isProjectileHit && victim.getLocation().getY() - victimData.getLastGroundY() > y_limit) velocity.setY(0.0);
+        if (!isProjectileHit && victim.getLocation().getY() - victimData.getLastGroundY() > profile.Y_LIMIT) {
+            velocity.setY(0.0);
+        }
 
         KBMPlayerVelocityEvent velocityEvent = new KBMPlayerVelocityEvent(victim, velocity);
 
@@ -198,8 +186,7 @@ public final class VelocityListener implements Listener {
         if (velocityEvent.isCancelled()) return; // 事件被取消, 返回
 
         // 攻击速度
-        int hit_delay = config.getInt("hit_delay");
-        if (victim.getMaximumNoDamageTicks() != hit_delay) victim.setMaximumNoDamageTicks(hit_delay);
+        if (victim.getMaximumNoDamageTicks() != profile.HIT_DELAY) victim.setMaximumNoDamageTicks(profile.HIT_DELAY);
 
         // 缓存玩家被修改过的击退, 至击退事件中修改
         victimData.setVelocity(velocityEvent.getVelocity());

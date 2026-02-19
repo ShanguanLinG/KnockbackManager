@@ -409,7 +409,7 @@ public final class KBMCommand implements TabExecutor {
 
                 Player player = (Player) sender;
 
-                PlayerData data = KnockbackManager.getInstance().getDataManager().getData(player.getUniqueId());
+                PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
 
                 data.setDebugging(!data.isDebugging());
 

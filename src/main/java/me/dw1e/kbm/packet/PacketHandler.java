@@ -8,8 +8,8 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import me.dw1e.kbm.KnockbackManager;
+import me.dw1e.kbm.config.KBProfile;
 import me.dw1e.kbm.data.PlayerData;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -69,7 +69,7 @@ public final class PacketHandler extends PacketAdapter {
         int entityId = integers.read(0);
         if (entityId == viewer.getEntityId()) return;
 
-        FileConfiguration config = plugin.getKbFile().getConfig(viewerData.getProfile());
+        KBProfile profile = plugin.getKbFile().getProfile(viewerData.getProfile());
 
         int tick = plugin.getTick();
         int lastAttackTick = viewerData.getLastAttackTick();
@@ -79,7 +79,7 @@ public final class PacketHandler extends PacketAdapter {
         // 处理错位
         process_misplace:
         {
-            if (!config.getBoolean("packet.misplace.enabled")
+            if (!profile.PACKET_MISPLACE_ENABLED
                     || !event.getPacketType().equals(PacketType.Play.Server.ENTITY_TELEPORT)
             ) break process_misplace;
 
@@ -108,10 +108,8 @@ public final class PacketHandler extends PacketAdapter {
             dx /= len;
             dz /= len;
 
-            double misplace = config.getDouble("packet.misplace.distance");
-
-            integers.write(1, floor((entityX + dx * misplace) * multiplier));
-            integers.write(3, floor((entityZ + dz * misplace) * multiplier));
+            integers.write(1, floor((entityX + dx * profile.PACKET_MISPLACE_DISTANCE) * multiplier));
+            integers.write(3, floor((entityZ + dz * profile.PACKET_MISPLACE_DISTANCE) * multiplier));
         }
 
         // 处理延迟更新位置包
@@ -124,7 +122,7 @@ public final class PacketHandler extends PacketAdapter {
                 if (set.remove(key)) break process_delay;
             }
 
-            if (!config.getBoolean("packet.delay.enabled")) break process_delay;
+            if (!profile.PACKET_DELAY_ENABLED) break process_delay;
 
             Player attacker = viewerData.getAttacker();
 
@@ -133,7 +131,7 @@ public final class PacketHandler extends PacketAdapter {
                     || tick - lastAttackTick <= noDamageTicks
             ) break process_delay;
 
-            int delay = Math.max(1, config.getInt("packet.delay.ticks"));
+            int delay = Math.max(1, profile.PACKET_DELAY_TICKS);
 
             PacketContainer cloned = packet.deepClone();
             event.setCancelled(true);
