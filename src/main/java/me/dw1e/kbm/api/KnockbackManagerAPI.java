@@ -5,9 +5,6 @@ import org.bukkit.entity.Player;
 
 public interface KnockbackManagerAPI {
 
-    @Deprecated
-    FileConfiguration getKBConfig(String filename);
-
     boolean isProfileExists(String profileName);
 
     String getProfile(Player player);

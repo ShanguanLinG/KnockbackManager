@@ -41,11 +41,15 @@ public final class VelocityListener implements Listener {
         boolean isProjectileHit = false, isSelfShootHit = false;
         int arrowStrength = 0; // 弓箭上的'冲击'附魔等级
 
+        FileConfiguration config = plugin.getKbFile().getConfig(victimData.getProfile());
+
         if (source instanceof LivingEntity) { // 玩家造成的击退
             attacker = (LivingEntity) source;
 
         } else if (source instanceof Projectile) { // 投掷物造成的击退
             if (source instanceof EnderPearl) return;
+
+            if (!config.getBoolean("projectile.enabled")) return; // 未启用投掷物击退修改
 
             ProjectileSource shooter = ((Projectile) source).getShooter();
 
@@ -83,9 +87,7 @@ public final class VelocityListener implements Listener {
 
         Vector velocity;
 
-        FileConfiguration config = plugin.getKbFile().getKbMap().get(victimData.getProfile()).getValue();
-
-        boolean proj_dir_override = config.getBoolean("projectile_direction_override");
+        boolean proj_dir_override = config.getBoolean("projectile.direction_override");
 
         if (isSelfShootHit) { // Bow Boost 的击退
             if (!proj_dir_override) {
@@ -131,10 +133,10 @@ public final class VelocityListener implements Listener {
 
         // 投掷物造成的击退
         if (isProjectileHit) {
-            double hor_proj_mult = config.getDouble("horizontal.projectile_multiplier");
-            double ver_proj_mult = config.getDouble("vertical.projectile_multiplier");
+            double proj_hor_mult = config.getDouble("projectile.horizontal_multiplier");
+            double proj_ver_mult = config.getDouble("projectile.vertical_multiplier");
 
-            velocity.multiply(new Vector(hor_proj_mult, ver_proj_mult, hor_proj_mult));
+            velocity.multiply(new Vector(proj_hor_mult, proj_ver_mult, proj_hor_mult));
 
             if (arrowStrength > 0) {
                 double adder = arrowStrength * 0.6F;

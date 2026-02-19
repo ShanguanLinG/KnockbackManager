@@ -60,11 +60,16 @@ public final class KBFile {
             fileConfig.options().copyDefaults(true).copyHeader(true);
             fileConfig.addDefaults(defaultConfig); // 将目前配置与默认配置比对, 查漏补缺
 
-            if (fileConfig.get("misplace.enabled") != null) {
+            if (fileConfig.get("horizontal.projectile_multiplier") != null) {
                 plugin.consoleLog("§a已将旧版配置文件 §e" + filename + " §a更新!");
 
-                fileConfig.set("packet.delay.enabled", fileConfig.getBoolean("misplace.enabled"));
-                fileConfig.set("packet.delay.ticks", fileConfig.getInt("misplace.delay"));
+                fileConfig.set("projectile.horizontal_multiplier", fileConfig.getDouble("horizontal.projectile_multiplier"));
+                fileConfig.set("projectile.vertical_multiplier", fileConfig.getDouble("vertical.projectile_multiplier"));
+                fileConfig.set("projectile.direction_override", fileConfig.getBoolean("projectile_knockback_direction_override"));
+
+                fileConfig.set("horizontal.projectile_multiplier", null);
+                fileConfig.set("vertical.projectile_multiplier", null);
+                fileConfig.set("projectile_knockback_direction_override", null);
             }
 
             // 限制最大数值
@@ -197,5 +202,9 @@ public final class KBFile {
 
     public Map<String, Pair<File, FileConfiguration>> getKbMap() {
         return kbMap;
+    }
+
+    public FileConfiguration getConfig(String name) {
+        return kbMap.get(name).getValue();
     }
 }

@@ -18,11 +18,6 @@ public final class DefaultKnockbackManagerAPI implements KnockbackManagerAPI {
     }
 
     @Override
-    public FileConfiguration getKBConfig(String filename) {
-        return getProfileConfig(filename);
-    }
-
-    @Override
     public boolean isProfileExists(String profileName) {
         return plugin.getKbFile().getKbMap().containsKey(profileName);
     }
@@ -52,6 +47,6 @@ public final class DefaultKnockbackManagerAPI implements KnockbackManagerAPI {
 
     @Override
     public FileConfiguration getProfileConfig(String profileName) {
-        return isProfileExists(profileName) ? plugin.getKbFile().getKbMap().get(profileName).getValue() : null;
+        return isProfileExists(profileName) ? plugin.getKbFile().getConfig(profileName) : null;
     }
 }

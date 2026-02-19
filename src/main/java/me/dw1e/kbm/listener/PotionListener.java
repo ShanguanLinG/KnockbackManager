@@ -36,7 +36,7 @@ public final class PotionListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.isExcluded()) return;
 
-        FileConfiguration config = plugin.getKbFile().getKbMap().get(data.getProfile()).getValue();
+        FileConfiguration config = plugin.getKbFile().getConfig(data.getProfile());
 
         if (config.getBoolean("potion.enabled") && data.isSprinting()) {
             Vector originalVel = projectile.getVelocity();
@@ -70,7 +70,7 @@ public final class PotionListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.isExcluded()) return;
 
-        FileConfiguration config = plugin.getKbFile().getKbMap().get(data.getProfile()).getValue();
+        FileConfiguration config = plugin.getKbFile().getConfig(data.getProfile());
 
         if (config.getBoolean("potion.enabled")) {
             double intensity = event.getIntensity(player);

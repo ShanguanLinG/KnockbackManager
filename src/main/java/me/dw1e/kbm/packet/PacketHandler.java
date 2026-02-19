@@ -69,7 +69,7 @@ public final class PacketHandler extends PacketAdapter {
         int entityId = integers.read(0);
         if (entityId == viewer.getEntityId()) return;
 
-        FileConfiguration config = plugin.getKbFile().getKbMap().get(viewerData.getProfile()).getValue();
+        FileConfiguration config = plugin.getKbFile().getConfig(viewerData.getProfile());
 
         int tick = plugin.getTick();
         int lastAttackTick = viewerData.getLastAttackTick();

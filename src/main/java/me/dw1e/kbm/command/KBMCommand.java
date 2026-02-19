@@ -19,10 +19,11 @@ import java.util.stream.Collectors;
 public final class KBMCommand implements TabExecutor {
 
     private static final List<String> TYPES = Arrays.asList(
-            "horizontal.ground", "horizontal.air", "horizontal.sprint_extra", "horizontal.projectile_multiplier",
-            "vertical.ground", "vertical.air", "vertical.sprint_extra", "vertical.projectile_multiplier",
+            "horizontal.ground", "horizontal.air", "horizontal.sprint_extra",
+            "vertical.ground", "vertical.air", "vertical.sprint_extra",
+            "projectile.enabled", "projectile.horizontal_multiplier", "projectile.vertical_multiplier", "projectile.direction_override",
             "packet.misplace.enabled", "packet.misplace.distance", "packet.delay.enabled", "packet.delay.ticks",
-            "stop_sprint", "y_limit", "hit_delay", "projectile_direction_override",
+            "stop_sprint", "y_limit", "hit_delay",
             "potion.enabled", "potion.horizontal_multiplier", "potion.vertical_multiplier", "potion.compensation_multiplier"
     );
 
@@ -64,7 +65,8 @@ public final class KBMCommand implements TabExecutor {
                         case "packet.misplace.enabled":
                         case "packet.delay.enabled":
                         case "stop_sprint":
-                        case "projectile_direction_override":
+                        case "projectile.enabled":
+                        case "projectile.direction_override":
                         case "potion.enabled":
                             return filterStartingWith(Arrays.asList("true", "false"), args[3]);
                     }
@@ -170,7 +172,7 @@ public final class KBMCommand implements TabExecutor {
                     return true;
                 }
 
-                FileConfiguration config = plugin.getKbFile().getKbMap().get(args[1]).getValue();
+                FileConfiguration config = plugin.getKbFile().getConfig(args[1]);
 
                 boolean sameValue = false;
 
@@ -185,7 +187,8 @@ public final class KBMCommand implements TabExecutor {
                     case "packet.misplace.enabled":
                     case "packet.delay.enabled":
                     case "stop_sprint":
-                    case "projectile_direction_override":
+                    case "projectile.enabled":
+                    case "projectile.direction_override":
                     case "potion.enabled": {
                         boolean value;
 
@@ -286,7 +289,7 @@ public final class KBMCommand implements TabExecutor {
 
                 StringBuilder message = new StringBuilder();
 
-                formatConfigSection(message, plugin.getKbFile().getKbMap().get(args[1]).getValue(), 1);
+                formatConfigSection(message, plugin.getKbFile().getConfig(args[1]), 1);
 
                 for (String line : message.toString().split("\n"))
                     sender.sendMessage("§e" + line);
