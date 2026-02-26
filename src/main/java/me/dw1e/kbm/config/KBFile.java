@@ -1,28 +1,24 @@
 package me.dw1e.kbm.config;
 
 import me.dw1e.kbm.KnockbackManager;
-import me.dw1e.kbm.util.Pair;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public final class KBFile {
 
     private final KnockbackManager plugin;
     private final FileConfiguration defaultConfig;
-    private final Map<String, Pair<File, FileConfiguration>> kbMap = new HashMap<>();
-    private final Map<String, KBProfile> kbProfileMap = new HashMap<>();
+    private final Map<String, KB> kbMap = new HashMap<>();
 
     public KBFile(KnockbackManager plugin) {
         this.plugin = plugin;
@@ -47,64 +43,65 @@ public final class KBFile {
 
         kbMap.clear();
 
-        try (Stream<Path> paths = Files.list(Paths.get(plugin.getDataFolder().getPath()))) {
-            paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".yml"))
-                    .forEach(path -> kbMap.put(path.getFileName().toString().replace(".yml", ""),
-                            new Pair<>(path.toFile(), YamlConfiguration.loadConfiguration(path.toFile()))));
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(plugin.getDataFolder().toPath(), "*.yml")) {
+            for (Path path : stream) {
+                String name = path.getFileName().toString().replace(".yml", "");
+
+                KB kb = new KB(path.toFile(), YamlConfiguration.loadConfiguration(path.toFile()));
+                kbMap.put(name, kb);
+
+                String fileName = kb.file.getName();
+                FileConfiguration config = kb.config;
+
+                config.options().copyDefaults(true).copyHeader(true);
+                config.addDefaults(defaultConfig); // 将目前配置与默认配置比对, 查漏补缺
+
+                if (config.get("horizontal.projectile_multiplier") != null) {
+                    plugin.consoleLog("§a已将旧版配置文件 §e" + fileName + " §a更新!");
+
+                    config.set("projectile.horizontal_multiplier", config.getDouble("horizontal.projectile_multiplier"));
+                    config.set("projectile.vertical_multiplier", config.getDouble("vertical.projectile_multiplier"));
+                    config.set("projectile.direction_override", config.getBoolean("projectile_knockback_direction_override"));
+
+                    config.set("horizontal.projectile_multiplier", null);
+                    config.set("vertical.projectile_multiplier", null);
+                    config.set("projectile_knockback_direction_override", null);
+                }
+
+                // 限制最大数值
+                config.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, config.getDouble("packet.misplace.distance"))));
+                config.set("packet.delay.ticks", Math.max(1, Math.min(5, config.getInt("packet.delay.ticks"))));
+                config.set("potion.horizontal_multiplier", Math.max(-8.0, Math.min(8.0, config.getDouble("potion.horizontal_multiplier"))));
+                config.set("potion.vertical_multiplier", Math.max(-7.0, Math.min(7.0, config.getDouble("potion.vertical_multiplier"))));
+
+                // 删除无用的数值
+                config.getKeys(true).stream()
+                        .filter(key -> !config.isConfigurationSection(key))
+                        .filter(key -> !defaultConfig.isSet(key))
+                        .forEach(key -> config.set(key, null));
+
+                // 在删除掉无用配置后如果section为空, 那么把section也删了
+                config.getKeys(true).stream()
+                        .filter(config::isConfigurationSection) // 只处理section
+                        .sorted((a, b) -> Integer.compare(b.length(), a.length())) // 按深度倒序(子节点优先)
+                        .forEach(key -> {
+                            if (config.getConfigurationSection(key).getKeys(false).isEmpty()) {
+                                config.set(key, null);
+                            }
+                        });
+
+                try {
+                    config.save(kb.file);
+                } catch (IOException e) {
+                    sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + fileName + " 失败, 请查看控制台详细错误日志!");
+                    throw new RuntimeException(e.getMessage());
+                }
+            }
+
         } catch (IOException e) {
             sender.sendMessage(KnockbackManager.PREFIX + " §c读取KB文件夹时发生错误!");
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
-
-        kbMap.forEach((filename, pair) -> {
-            FileConfiguration fileConfig = pair.getValue();
-
-            fileConfig.options().copyDefaults(true).copyHeader(true);
-            fileConfig.addDefaults(defaultConfig); // 将目前配置与默认配置比对, 查漏补缺
-
-            if (fileConfig.get("horizontal.projectile_multiplier") != null) {
-                plugin.consoleLog("§a已将旧版配置文件 §e" + filename + " §a更新!");
-
-                fileConfig.set("projectile.horizontal_multiplier", fileConfig.getDouble("horizontal.projectile_multiplier"));
-                fileConfig.set("projectile.vertical_multiplier", fileConfig.getDouble("vertical.projectile_multiplier"));
-                fileConfig.set("projectile.direction_override", fileConfig.getBoolean("projectile_knockback_direction_override"));
-
-                fileConfig.set("horizontal.projectile_multiplier", null);
-                fileConfig.set("vertical.projectile_multiplier", null);
-                fileConfig.set("projectile_knockback_direction_override", null);
-            }
-
-            // 限制最大数值
-            fileConfig.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, fileConfig.getDouble("packet.misplace.distance"))));
-            fileConfig.set("packet.delay.ticks", Math.max(1, Math.min(5, fileConfig.getInt("packet.delay.ticks"))));
-            fileConfig.set("potion.horizontal_multiplier", Math.max(-8.0, Math.min(8.0, fileConfig.getDouble("potion.horizontal_multiplier"))));
-            fileConfig.set("potion.vertical_multiplier", Math.max(-7.0, Math.min(7.0, fileConfig.getDouble("potion.vertical_multiplier"))));
-
-            // 删除无用的数值
-            fileConfig.getKeys(true).stream()
-                    .filter(key -> !fileConfig.isConfigurationSection(key))
-                    .filter(key -> !defaultConfig.isSet(key))
-                    .forEach(key -> fileConfig.set(key, null));
-
-            // 在删除掉无用配置后如果section为空, 那么把section也删了
-            fileConfig.getKeys(true).stream()
-                    .filter(fileConfig::isConfigurationSection) // 只处理section
-                    .sorted((a, b) -> Integer.compare(b.length(), a.length())) // 按深度倒序(子节点优先)
-                    .forEach(key -> {
-                        if (fileConfig.getConfigurationSection(key).getKeys(false).isEmpty()) {
-                            fileConfig.set(key, null);
-                        }
-                    });
-
-            kbProfileMap.put(filename, new KBProfile(fileConfig));
-
-            try {
-                fileConfig.save(pair.getKey());
-            } catch (IOException e) {
-                sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
-                throw new RuntimeException(e.getMessage());
-            }
-        });
     }
 
     public void create(String filename, CommandSender sender) {
@@ -117,28 +114,28 @@ public final class KBFile {
 
         if (file.getParentFile().mkdir()) {
             try {
-                if (!file.createNewFile())
+                if (!file.createNewFile()) {
                     sender.sendMessage(KnockbackManager.PREFIX + " §c创建KB文件 " + filename + " 失败!");
+                }
             } catch (IOException e) {
                 sender.sendMessage(KnockbackManager.PREFIX + " §c创建KB文件 " + filename + " 失败, 请查看控制台详细错误日志!");
                 throw new RuntimeException(e.getMessage());
             }
         }
 
-        FileConfiguration fileConfig = YamlConfiguration.loadConfiguration(file);
+        FileConfiguration config = YamlConfiguration.loadConfiguration(file);
 
-        fileConfig.options().copyDefaults(true).copyHeader(true);
-        fileConfig.addDefaults(defaultConfig);
+        config.options().copyDefaults(true).copyHeader(true);
+        config.addDefaults(defaultConfig);
 
         try {
-            fileConfig.save(file);
+            config.save(file);
         } catch (IOException e) {
             sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
         }
 
-        kbMap.put(filename, new Pair<>(file, fileConfig));
-        kbProfileMap.put(filename, new KBProfile(fileConfig));
+        kbMap.put(filename, new KB(file, config));
 
         sender.sendMessage(KnockbackManager.PREFIX + " §a创建 " + filename + " 成功!");
     }
@@ -158,10 +155,9 @@ public final class KBFile {
                 .filter(data -> data.getProfile().equals(filename))
                 .forEach(data -> data.setProfile("default"));
 
-        sender.sendMessage(KnockbackManager.PREFIX + (kbMap.get(filename).getKey().delete()
+        sender.sendMessage(KnockbackManager.PREFIX + (kbMap.get(filename).file.delete()
                 ? " §a删除 " + filename + " 成功!" : " §c删除 " + filename + " 失败!"));
 
-        kbProfileMap.remove(filename);
         kbMap.remove(filename);
     }
 
@@ -172,8 +168,10 @@ public final class KBFile {
         }
 
         try {
-            kbMap.get(filename).getValue().save(kbMap.get(filename).getKey());
-            kbProfileMap.get(filename).updateConfig(getConfig(filename));
+            KB kb = kbMap.get(filename);
+
+            kb.config.save(kb.file);
+            kb.profile.updateConfig(kb.config);
         } catch (IOException e) {
             sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
@@ -198,9 +196,11 @@ public final class KBFile {
         }
 
         try {
-            kbMap.get(filename).getValue().load(kbMap.get(filename).getKey());
-            kbProfileMap.get(filename).updateConfig(getConfig(filename));
-        } catch (InvalidConfigurationException | IOException e) {
+            KB kb = kbMap.get(filename);
+
+            kb.config.load(kb.file);
+            kb.profile.updateConfig(kb.config);
+        } catch (Exception e) {
             sender.sendMessage(KnockbackManager.PREFIX + " §c重载 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
         }
@@ -208,15 +208,29 @@ public final class KBFile {
         sender.sendMessage(KnockbackManager.PREFIX + " §a重载 " + filename + " 成功!");
     }
 
-    public Map<String, Pair<File, FileConfiguration>> getKbMap() {
+    public Map<String, KB> getKbMap() {
         return kbMap;
     }
 
     public FileConfiguration getConfig(String name) {
-        return kbMap.get(name).getValue();
+        KB kb = kbMap.get(name);
+        return kb != null ? kb.config : null;
     }
 
     public KBProfile getProfile(String name) {
-        return kbProfileMap.get(name);
+        KB kb = kbMap.get(name);
+        return kb != null ? kb.profile : null;
+    }
+
+    public static final class KB {
+        private final File file;
+        private final FileConfiguration config;
+        private final KBProfile profile;
+
+        public KB(File file, FileConfiguration config) {
+            this.file = file;
+            this.config = config;
+            this.profile = new KBProfile(config);
+        }
     }
 }

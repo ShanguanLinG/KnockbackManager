@@ -33,6 +33,9 @@ public final class KBProfile {
     public double POTION_VERTICAL_MULTIPLIER;
     public double POTION_COMPENSATION_MULTIPLIER;
 
+    public boolean MODERN_COOLDOWN_AFFECTS_KB;
+    public boolean MODERN_NETHERITE_KB_RESISTANCE;
+
     public KBProfile(FileConfiguration config) {
         updateConfig(config);
     }
@@ -66,5 +69,8 @@ public final class KBProfile {
         POTION_HORIZONTAL_MULTIPLIER = config.getDouble("potion.horizontal_multiplier");
         POTION_VERTICAL_MULTIPLIER = config.getDouble("potion.vertical_multiplier");
         POTION_COMPENSATION_MULTIPLIER = config.getDouble("potion.compensation_multiplier");
+
+        MODERN_COOLDOWN_AFFECTS_KB = config.getBoolean("modern.cooldown_affects_kb");
+        MODERN_NETHERITE_KB_RESISTANCE = config.getBoolean("modern.netherite_kb_resistance");
     }
 }

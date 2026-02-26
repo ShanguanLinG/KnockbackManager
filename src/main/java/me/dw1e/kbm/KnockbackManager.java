@@ -41,7 +41,7 @@ public final class KnockbackManager extends JavaPlugin {
     private int tick;
     private BukkitTask tickTask;
 
-    private boolean isAtLeast1_17;
+    private boolean isAtLeast1_16;
 
     public static KnockbackManager getInstance() {
         return instance;
@@ -135,8 +135,8 @@ public final class KnockbackManager extends JavaPlugin {
             } else {
                 consoleLog("§a检测到 ProtocolLib §e" + pLibDesc + "§a, 已启用 Misplace 模块!");
 
-                isAtLeast1_17 = ProtocolLibrary.getProtocolManager().getMinecraftVersion()
-                        .isAtLeast(MinecraftVersion.CAVES_CLIFFS_1);
+                isAtLeast1_16 = ProtocolLibrary.getProtocolManager().getMinecraftVersion()
+                        .isAtLeast(MinecraftVersion.NETHER_UPDATE);
 
                 packetHandler = new PacketHandler(this);
                 packetHandler.enable();
@@ -171,8 +171,8 @@ public final class KnockbackManager extends JavaPlugin {
         return tick;
     }
 
-    public boolean isAtLeast1_17() {
-        return isAtLeast1_17;
+    public boolean isAtLeast1_16() {
+        return isAtLeast1_16;
     }
 
     public void consoleLog(String s) {

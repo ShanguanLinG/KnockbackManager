@@ -24,7 +24,8 @@ public final class KBMCommand implements TabExecutor {
             "projectile.enabled", "projectile.horizontal_multiplier", "projectile.vertical_multiplier", "projectile.direction_override",
             "packet.misplace.enabled", "packet.misplace.distance", "packet.delay.enabled", "packet.delay.ticks",
             "stop_sprint", "y_limit", "hit_delay",
-            "potion.enabled", "potion.horizontal_multiplier", "potion.vertical_multiplier", "potion.compensation_multiplier"
+            "potion.enabled", "potion.horizontal_multiplier", "potion.vertical_multiplier", "potion.compensation_multiplier",
+            "modern.cooldown_affects_kb", "modern.netherite_kb_resistance"
     );
 
     private final KnockbackManager plugin;
@@ -68,6 +69,8 @@ public final class KBMCommand implements TabExecutor {
                         case "projectile.enabled":
                         case "projectile.direction_override":
                         case "potion.enabled":
+                        case "modern.cooldown_affects_kb":
+                        case "modern.netherite_kb_resistance":
                             return filterStartingWith(Arrays.asList("true", "false"), args[3]);
                     }
                 }
@@ -167,12 +170,12 @@ public final class KBMCommand implements TabExecutor {
                     return true;
                 }
 
-                if (!plugin.getKbFile().getKbMap().containsKey(args[1])) {
+                FileConfiguration config = plugin.getKbFile().getConfig(args[1]);
+
+                if (config == null) {
                     sender.sendMessage(prefix + " §cKB文件 " + args[1] + " 不存在!");
                     return true;
                 }
-
-                FileConfiguration config = plugin.getKbFile().getConfig(args[1]);
 
                 boolean sameValue = false;
 
@@ -189,7 +192,9 @@ public final class KBMCommand implements TabExecutor {
                     case "stop_sprint":
                     case "projectile.enabled":
                     case "projectile.direction_override":
-                    case "potion.enabled": {
+                    case "potion.enabled":
+                    case "modern.cooldown_affects_kb":
+                    case "modern.netherite_kb_resistance": {
                         boolean value;
 
                         String input = args[3].toLowerCase();
@@ -443,7 +448,14 @@ public final class KBMCommand implements TabExecutor {
 
         for (String key : section.getKeys(false)) {
             if (section.isConfigurationSection(key)) {
-                builder.append("§e").append(indent).append(key).append("§f").append(":\n");
+                builder.append("§e").append(indent).append(key).append("§f");
+
+                if (!plugin.isAtLeast1_16() && key.equals("modern")) {
+                    builder.append(": §c(1.16+)\n");
+
+                } else {
+                    builder.append(":\n");
+                }
 
                 formatConfigSection(builder, section.getConfigurationSection(key), indentLV + 1);
 

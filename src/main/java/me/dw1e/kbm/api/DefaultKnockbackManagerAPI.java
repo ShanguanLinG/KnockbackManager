@@ -41,12 +41,12 @@ public final class DefaultKnockbackManagerAPI implements KnockbackManagerAPI {
     }
 
     @Override
-    public void setModificationExcluded(Player player, boolean managed) {
-        getData(player).setExcluded(managed);
+    public void setModificationExcluded(Player player, boolean excluded) {
+        getData(player).setExcluded(excluded);
     }
 
     @Override
     public FileConfiguration getProfileConfig(String profileName) {
-        return isProfileExists(profileName) ? plugin.getKbFile().getConfig(profileName) : null;
+        return plugin.getKbFile().getConfig(profileName);
     }
 }

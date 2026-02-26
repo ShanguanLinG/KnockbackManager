@@ -37,6 +37,7 @@ public final class PotionListener implements Listener {
         if (data == null || data.isExcluded()) return;
 
         KBProfile profile = plugin.getKbFile().getProfile(data.getProfile());
+        if (profile == null) return;
 
         if (profile.POTION_ENABLED && data.isSprinting()) {
             Vector originalVel = projectile.getVelocity();
@@ -68,6 +69,7 @@ public final class PotionListener implements Listener {
         if (data == null || data.isExcluded()) return;
 
         KBProfile profile = plugin.getKbFile().getProfile(data.getProfile());
+        if (profile == null) return;
 
         if (profile.POTION_ENABLED) {
             double intensity = event.getIntensity(player);

@@ -10,6 +10,8 @@ import com.comphenix.protocol.reflect.StructureModifier;
 import me.dw1e.kbm.KnockbackManager;
 import me.dw1e.kbm.config.KBProfile;
 import me.dw1e.kbm.data.PlayerData;
+import me.dw1e.kbm.util.MathUtil;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -70,6 +72,7 @@ public final class PacketHandler extends PacketAdapter {
         if (entityId == viewer.getEntityId()) return;
 
         KBProfile profile = plugin.getKbFile().getProfile(viewerData.getProfile());
+        if (profile == null) return;
 
         int tick = plugin.getTick();
         int lastAttackTick = viewerData.getLastAttackTick();
@@ -90,13 +93,23 @@ public final class PacketHandler extends PacketAdapter {
                     || tick - lastAttackTick > (noDamageTicks / 2) + 3
             ) break process_misplace;
 
-            double multiplier = plugin.isAtLeast1_17() ? 1024.0D : 32.0D;
+            Location viewerLoc = viewer.getLocation();
 
-            double entityX = integers.read(1) / multiplier;
-            double entityZ = integers.read(3) / multiplier;
+            double viewerX = viewerLoc.getX(), viewerZ = viewerLoc.getZ();
+            double entityX, entityZ;
 
-            double viewerX = viewer.getLocation().getX();
-            double viewerZ = viewer.getLocation().getZ();
+            StructureModifier<Double> doubles = packet.getDoubles();
+            boolean modern = doubles.size() >= 3; // 1.17+开始数据包结构变化
+
+            if (modern) {
+                entityX = doubles.read(0);
+                entityZ = doubles.read(2);
+            } else {
+                if (integers.size() < 4) break process_misplace;
+
+                entityX = integers.read(1) / 32.0D;
+                entityZ = integers.read(3) / 32.0D;
+            }
 
             double dx = viewerX - entityX;
             double dz = viewerZ - entityZ;
@@ -108,8 +121,16 @@ public final class PacketHandler extends PacketAdapter {
             dx /= len;
             dz /= len;
 
-            integers.write(1, floor((entityX + dx * profile.PACKET_MISPLACE_DISTANCE) * multiplier));
-            integers.write(3, floor((entityZ + dz * profile.PACKET_MISPLACE_DISTANCE) * multiplier));
+            double newX = entityX + dx * profile.PACKET_MISPLACE_DISTANCE;
+            double newZ = entityZ + dz * profile.PACKET_MISPLACE_DISTANCE;
+
+            if (modern) {
+                doubles.write(0, newX);
+                doubles.write(2, newZ);
+            } else {
+                integers.write(1, MathUtil.floor(newX * 32.0D));
+                integers.write(3, MathUtil.floor(newZ * 32.0D));
+            }
         }
 
         // 处理延迟更新位置包
@@ -181,11 +202,6 @@ public final class PacketHandler extends PacketAdapter {
 
     private String buildKey(PacketType type, int entityId, int tick) {
         return type.name() + ":" + entityId + ":" + tick;
-    }
-
-    private int floor(double v) {
-        int i = (int) v;
-        return (v < i) ? (i - 1) : i;
     }
 
     private static final class QueuedPacket {
