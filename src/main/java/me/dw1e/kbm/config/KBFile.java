@@ -16,6 +16,8 @@ import java.util.Map;
 
 public final class KBFile {
 
+    private final Path KB_PATH;
+
     private final KnockbackManager plugin;
     private final FileConfiguration defaultConfig;
     private final Map<String, KB> kbMap = new HashMap<>();
@@ -23,8 +25,10 @@ public final class KBFile {
     public KBFile(KnockbackManager plugin) {
         this.plugin = plugin;
 
+        KB_PATH = plugin.getDataFolder().toPath().resolve("knockback");
+
         try {
-            defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource("default.yml")));
+            defaultConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(plugin.getResource("knockback/default.yml")));
         } catch (NullPointerException e) {
             plugin.consoleLog("§c读取预设KB文件时发生错误!");
             throw new RuntimeException(e.getMessage());
@@ -32,10 +36,17 @@ public final class KBFile {
     }
 
     public void load(CommandSender sender) {
-        if (Files.notExists(plugin.getDataFolder().toPath().resolve("default.yml"))) {
+        if (Files.notExists(KB_PATH.resolve("default.yml"))) {
             try {
-                plugin.saveResource("default.yml", false);
-            } catch (IllegalArgumentException e) {
+                Files.createDirectories(KB_PATH);
+
+                Path defaultFile = KB_PATH.resolve("default.yml");
+
+                if (Files.notExists(defaultFile)) {
+                    plugin.saveResource("knockback/default.yml", false);
+                }
+
+            } catch (IllegalArgumentException | IOException e) {
                 sender.sendMessage(KnockbackManager.PREFIX + " §c创建默认KB文件时发生错误!");
                 throw new RuntimeException(e.getMessage());
             }
@@ -43,7 +54,7 @@ public final class KBFile {
 
         kbMap.clear();
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(plugin.getDataFolder().toPath(), "*.yml")) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(KB_PATH, "*.yml")) {
             for (Path path : stream) {
                 String name = path.getFileName().toString().replace(".yml", "");
 
@@ -55,18 +66,6 @@ public final class KBFile {
 
                 config.options().copyDefaults(true).copyHeader(true);
                 config.addDefaults(defaultConfig); // 将目前配置与默认配置比对, 查漏补缺
-
-                if (config.get("horizontal.projectile_multiplier") != null) {
-                    plugin.consoleLog("§a已将旧版配置文件 §e" + fileName + " §a更新!");
-
-                    config.set("projectile.horizontal_multiplier", config.getDouble("horizontal.projectile_multiplier"));
-                    config.set("projectile.vertical_multiplier", config.getDouble("vertical.projectile_multiplier"));
-                    config.set("projectile.direction_override", config.getBoolean("projectile_knockback_direction_override"));
-
-                    config.set("horizontal.projectile_multiplier", null);
-                    config.set("vertical.projectile_multiplier", null);
-                    config.set("projectile_knockback_direction_override", null);
-                }
 
                 // 限制最大数值
                 config.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, config.getDouble("packet.misplace.distance"))));
@@ -110,7 +109,7 @@ public final class KBFile {
             return;
         }
 
-        File file = new File(plugin.getDataFolder(), filename + ".yml");
+        File file = new File(KB_PATH.toFile(), filename + ".yml");
 
         if (file.getParentFile().mkdir()) {
             try {

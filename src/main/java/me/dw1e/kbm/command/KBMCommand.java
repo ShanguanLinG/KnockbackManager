@@ -1,6 +1,7 @@
 package me.dw1e.kbm.command;
 
 import me.dw1e.kbm.KnockbackManager;
+import me.dw1e.kbm.config.ConfigValue;
 import me.dw1e.kbm.data.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -53,7 +54,6 @@ public final class KBMCommand implements TabExecutor {
         switch (subCmd) {
             case "delete":
             case "edit":
-            case "reload":
             case "view": {
                 if (args.length == 2) {
                     return filterStartingWith(fileNames, args[1]);
@@ -75,6 +75,13 @@ public final class KBMCommand implements TabExecutor {
                     }
                 }
                 break;
+            }
+            case "reload": {
+                if (args.length == 2) {
+                    return filterStartingWith(Arrays.asList("config", "kb"), args[1]);
+                } else if (args.length == 3) {
+                    return filterStartingWith(fileNames, args[2]);
+                }
             }
             case "setexcluded":
             case "getprofile":
@@ -302,14 +309,33 @@ public final class KBMCommand implements TabExecutor {
                 return true;
             }
             case "reload": {
-                if (args.length != 2) {
-                    sender.sendMessage(prefix + " §c用法: /" + label + " reload <KB文件名|*>");
+                if (args.length < 2) {
+                    sender.sendMessage(prefix + " §c请选择要重载的部分:");
+                    sender.sendMessage("  §7主配置: §f/" + label + " reload config");
+                    sender.sendMessage("  §7KB配置: §f/" + label + " reload kb <KB文件名|*>");
                     return true;
                 }
 
-                plugin.getKbFile().reload(args[1], sender);
+                String input = args[1].toLowerCase();
 
-                return true;
+                if (input.equals("config")) {
+                    plugin.reload();
+                    sender.sendMessage(KnockbackManager.PREFIX + " §a主配置文件已重载!");
+                    return true;
+
+                } else if (input.equals("kb")) {
+                    if (args.length < 3) {
+                        sender.sendMessage(prefix + " §c用法: /" + label + " reload kb <KB文件名|*>");
+                        return true;
+                    }
+
+                    plugin.getKbFile().reload(args[2], sender);
+                    return true;
+
+                } else {
+                    sender.sendMessage(KnockbackManager.PREFIX + " §c未知部分: " + args[1]);
+                    return true;
+                }
             }
             case "getprofile": {
                 if (args.length != 2) {
@@ -422,18 +448,6 @@ public final class KBMCommand implements TabExecutor {
 
                 return true;
             }
-            case "test": {
-                try {
-                    KnockbackManager.TEST = Double.parseDouble(args[1]);
-                } catch (NumberFormatException e) {
-                    sender.sendMessage(KnockbackManager.PREFIX + " §c无效的数值: " + args[1]);
-                    return true;
-                }
-
-                sender.sendMessage(KnockbackManager.PREFIX + " §a测试数值已设置为: " + KnockbackManager.TEST);
-
-                return true;
-            }
             default: {
                 sender.sendMessage(prefix + " §c未知子命令: " + args[0]);
                 return true;
@@ -450,9 +464,10 @@ public final class KBMCommand implements TabExecutor {
             if (section.isConfigurationSection(key)) {
                 builder.append("§e").append(indent).append(key).append("§f");
 
-                if (!plugin.isAtLeast1_16() && key.equals("modern")) {
+                if (ConfigValue.HIT_DETECTION_ENABLED && key.equals("misplace")) {
+                    builder.append(": §c(与服务器端命中检测不兼容)\n");
+                } else if (!plugin.isAtLeast1_16() && key.equals("modern")) {
                     builder.append(": §c(1.16+)\n");
-
                 } else {
                     builder.append(":\n");
                 }

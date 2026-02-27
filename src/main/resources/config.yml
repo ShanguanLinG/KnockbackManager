@@ -1,0 +1,25 @@
+#### KBM - 主配置
+#
+# 使用本插件前务必确保你已经完整的看完了插件文档
+# 插件文档 & 参考配置, 请见群(673765463)文件
+#
+# 以下是配置文件:
+
+
+# 是否启用击退同步? (需要ProtocolLib)
+kb_sync: false
+
+# 是否启用服务器端命中检测? (需要ProtocolLib)
+# 开启此功能后玩家的攻击是否命中由服务器端判定
+# 注意: 此功能与 packet.misplace 不兼容
+server_side_hit_detection:
+  # 启用此功能
+  enabled: false
+  # 碰撞箱宽度 (原版: 1.8为0.8, 1.9+为0.6)
+  box_length: 0.8
+  # 碰撞箱高度
+  box_height: 1.8
+  # 最大攻击距离
+  max_distance:
+    survival: 3.0
+    creative: 5.0

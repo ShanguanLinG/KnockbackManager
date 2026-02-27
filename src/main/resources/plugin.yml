@@ -1,6 +1,6 @@
 name: KnockbackManager
 main: me.dw1e.kbm.KnockbackManager
-version: 1.21.1
+version: 2.0.0
 author: dw1e
 softdepend: [ ProtocolLib, PlaceholderAPI ]
 api-version: 1.16

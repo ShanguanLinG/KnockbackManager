@@ -2,6 +2,7 @@ package me.dw1e.kbm.listener;
 
 import me.dw1e.kbm.KnockbackManager;
 import me.dw1e.kbm.api.event.KBMPlayerVelocityEvent;
+import me.dw1e.kbm.config.ConfigValue;
 import me.dw1e.kbm.config.KBProfile;
 import me.dw1e.kbm.data.PlayerData;
 import me.dw1e.kbm.util.MathUtil;
@@ -209,7 +210,8 @@ public final class VelocityListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     private void applyVelocity(PlayerVelocityEvent event) {
-        PlayerData data = plugin.getDataManager().getData(event.getPlayer().getUniqueId());
+        Player player = event.getPlayer();
+        PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.getVelocity() == null) return;
 
         // 替换击退为本插件修改过后的击退
@@ -224,14 +226,15 @@ public final class VelocityListener implements Listener {
         if (!(attackerEntity instanceof Player)) return false;
 
         Player attackerPlayer = (Player) attackerEntity;
+        PlayerData attackerData = plugin.getDataManager().getData(attackerEntity.getUniqueId());
 
         if (profile.MODERN_COOLDOWN_AFFECTS_KB && plugin.isAtLeast1_16()) {
+            float cooldown = ConfigValue.HIT_DETECTION_ENABLED
+                    ? attackerData.getCacheCooldown() : attackerPlayer.getAttackCooldown();
 
             // 高版本需要冷却达标才可触发疾跑击退
-            if (attackerPlayer.getAttackCooldown() <= 0.9F) return false;
+            if (cooldown <= 0.9F) return false;
         }
-
-        PlayerData attackerData = plugin.getDataManager().getData(attackerEntity.getUniqueId());
 
         if (profile.STOP_SPRINT) {
             // 服务器状态 (攻击后会被重置)

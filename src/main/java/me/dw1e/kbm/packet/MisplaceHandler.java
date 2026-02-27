@@ -1,7 +1,6 @@
 package me.dw1e.kbm.packet;
 
 import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
@@ -18,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-public final class PacketHandler extends PacketAdapter {
+public final class MisplaceHandler extends PacketAdapter {
 
     private static final Set<PacketType> PACKETS = new HashSet<>(Arrays.asList(
             PacketType.Play.Server.ENTITY_TELEPORT,
@@ -32,20 +31,20 @@ public final class PacketHandler extends PacketAdapter {
     private final Map<UUID, Deque<QueuedPacket>> packetQueues = new ConcurrentHashMap<>();
     private final Map<UUID, Set<String>> expectedPackets = new ConcurrentHashMap<>();
 
-    public PacketHandler(KnockbackManager plugin) {
+    public MisplaceHandler(KnockbackManager plugin) {
         super(plugin, ListenerPriority.LOWEST, PACKETS);
         this.plugin = plugin;
     }
 
     public void enable() {
-        ProtocolLibrary.getProtocolManager().addPacketListener(this);
+        plugin.getProtocolManager().addPacketListener(this);
     }
 
     public void disable() {
         packetQueues.clear();
         expectedPackets.clear();
 
-        ProtocolLibrary.getProtocolManager().removePacketListener(this);
+        plugin.getProtocolManager().removePacketListener(this);
     }
 
     public void onQuit(Player player) {
@@ -187,7 +186,7 @@ public final class PacketHandler extends PacketAdapter {
                 expectedPackets.computeIfAbsent(uuid, k -> ConcurrentHashMap.newKeySet()).add(key);
 
                 // 不要直接在最后面设置 filters: true, 不然其它使用 ProtocolLib 的插件不会收到你新发的包!
-                ProtocolLibrary.getProtocolManager().sendServerPacket(queued.player, queued.packet);
+                plugin.getProtocolManager().sendServerPacket(queued.player, queued.packet);
 
                 queue.pollFirst();
             }
