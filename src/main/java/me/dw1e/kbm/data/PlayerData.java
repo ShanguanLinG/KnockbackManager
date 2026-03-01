@@ -58,7 +58,7 @@ public final class PlayerData {
     public boolean isOnGround() {
         boolean playerGround = player.isOnGround();
 
-        if (!ConfigValue.KB_SYNC) return playerGround;
+        if (!ConfigValue.KB_SYNC_ENABLED) return playerGround;
 
         playerGround |= computeGround(player.getVelocity().getY());
 
@@ -168,16 +168,19 @@ public final class PlayerData {
 
     @SuppressWarnings("deprecation")
     public void sendPing() {
-        long now = System.currentTimeMillis();
-
-        if (now - lastSendPing <= 1000L) return;
-        lastSendPing = now;
-
         KnockbackManager kbm = KnockbackManager.getInstance();
 
         int tick = kbm.getTick();
 
-        if (tick - lastAttackTick > 40 && tick - lastAttackedByOtherTick > 40) return;
+        long now = System.currentTimeMillis();
+
+        if (tick - lastAttackTick > 40 && tick - lastAttackedByOtherTick > 40) {
+            if (now - lastSendPing <= 1000L) return; // 脱战, 1秒发1次
+        } else {
+            if (now - lastSendPing <= 200L) return; // 战斗中, 1秒发5次
+        }
+
+        lastSendPing = now;
 
         PacketContainer packet;
 

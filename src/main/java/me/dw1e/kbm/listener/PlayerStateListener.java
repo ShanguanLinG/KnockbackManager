@@ -22,7 +22,7 @@ public final class PlayerStateListener implements Listener {
     }
 
     @EventHandler
-    private void onJoin(PlayerJoinEvent event) {
+    public void onJoin(PlayerJoinEvent event) {
         plugin.getDataManager().create(event.getPlayer());
     }
 
@@ -35,7 +35,7 @@ public final class PlayerStateListener implements Listener {
     }
 
     @EventHandler
-    private void onToggleSprint(PlayerToggleSprintEvent event) {
+    public void onToggleSprint(PlayerToggleSprintEvent event) {
         PlayerData data = plugin.getDataManager().getData(event.getPlayer().getUniqueId());
 
         // 玩家数据包切换疾跑状态
@@ -43,7 +43,7 @@ public final class PlayerStateListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    private void onAttack(EntityDamageByEntityEvent event) {
+    public void onAttack(EntityDamageByEntityEvent event) {
         Entity source = event.getDamager();
         Player attacker;
 
@@ -81,8 +81,9 @@ public final class PlayerStateListener implements Listener {
     }
 
     @EventHandler
-    private void onMove(PlayerMoveEvent event) {
+    public void onMove(PlayerMoveEvent event) {
         Location to = event.getTo(), from = event.getFrom();
+        if (to == null) return;
 
         // 只移动视角, 位置没动过, 不需要处理, 跳过
         if (to.getX() == from.getX() && to.getY() == from.getY() && to.getZ() == from.getZ()) return;
@@ -95,15 +96,18 @@ public final class PlayerStateListener implements Listener {
     }
 
     @EventHandler
-    private void onTeleport(PlayerTeleportEvent event) {
+    public void onTeleport(PlayerTeleportEvent event) {
+        Location to = event.getTo();
+        if (to == null) return;
+
         PlayerData data = plugin.getDataManager().getData(event.getPlayer().getUniqueId());
 
         // 将最后地面Y轴设置为传送位置, 修复: 在传送后从未移动过时, 第一次被攻击, 会误触 y_limit 的问题
-        if (data != null) data.setLastGroundY(event.getTo().getY());
+        if (data != null) data.setLastGroundY(to.getY());
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    private void onCommand(PlayerCommandPreprocessEvent event) {
+    public void onCommand(PlayerCommandPreprocessEvent event) {
         String command = event.getMessage().toLowerCase();
 
         switch (command) {

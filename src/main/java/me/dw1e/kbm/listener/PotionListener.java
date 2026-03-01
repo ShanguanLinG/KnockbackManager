@@ -24,7 +24,7 @@ public final class PotionListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    private void onProjectileLaunch(ProjectileLaunchEvent event) {
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
         if (event.getEntityType() != EntityType.SPLASH_POTION) return;
 
         Projectile projectile = event.getEntity();
@@ -61,7 +61,7 @@ public final class PotionListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    private void onPotionSplash(PotionSplashEvent event) {
+    public void onPotionSplash(PotionSplashEvent event) {
         if (!(event.getEntity().getShooter() instanceof Player)) return;
         Player player = (Player) event.getEntity().getShooter();
 

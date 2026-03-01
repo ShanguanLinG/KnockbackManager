@@ -32,7 +32,7 @@ public final class VelocityListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    private void computeVelocity(EntityDamageByEntityEvent event) {
+    public void computeVelocity(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
 
         Player victim = (Player) event.getEntity();
@@ -208,8 +208,8 @@ public final class VelocityListener implements Listener {
         victimData.setVelocity(velocityEvent.getVelocity());
     }
 
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    private void applyVelocity(PlayerVelocityEvent event) {
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void applyVelocity(PlayerVelocityEvent event) {
         Player player = event.getPlayer();
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.getVelocity() == null) return;
@@ -229,7 +229,7 @@ public final class VelocityListener implements Listener {
         PlayerData attackerData = plugin.getDataManager().getData(attackerEntity.getUniqueId());
 
         if (profile.MODERN_COOLDOWN_AFFECTS_KB && plugin.isAtLeast1_16()) {
-            float cooldown = ConfigValue.HIT_DETECTION_ENABLED
+            float cooldown = ConfigValue.SSHD_ENABLED
                     ? attackerData.getCacheCooldown() : attackerPlayer.getAttackCooldown();
 
             // 高版本需要冷却达标才可触发疾跑击退

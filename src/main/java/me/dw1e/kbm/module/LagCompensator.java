@@ -1,4 +1,4 @@
-package me.dw1e.kbm.listener;
+package me.dw1e.kbm.module;
 
 import me.dw1e.kbm.util.Pair;
 import org.bukkit.Location;
@@ -6,10 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -24,10 +21,9 @@ public final class LagCompensator implements Listener {
 
     public Location getHistoryLocation(int rewindMS, Player player) {
         List<Pair<Location, Long>> times = locationTimes.get(player.getUniqueId());
+        if (times == null || times.isEmpty()) return player.getLocation();
+
         long currentTime = System.currentTimeMillis();
-
-        if (times == null) return player.getLocation();
-
         int rewindTime = rewindMS + PING_OFFSET;
         for (int i = times.size() - 1; i >= 0; i--) {
             int elapsedTime = (int) (currentTime - times.get(i).getValue());
@@ -48,7 +44,7 @@ public final class LagCompensator implements Listener {
             }
         }
 
-        return player.getLocation();
+        return times.get(0).getKey().clone();
     }
 
     private void processPosition(Location location, Player player) {
@@ -81,5 +77,10 @@ public final class LagCompensator implements Listener {
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
         processPosition(player.getLocation(), player);
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        locationTimes.remove(event.getPlayer().getUniqueId());
     }
 }

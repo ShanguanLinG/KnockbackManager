@@ -48,7 +48,10 @@ public final class PingHandler extends PacketAdapter {
         if (id == null) return;
 
         Long sendTime = data.getTimeline().remove(id);
-        if (sendTime == null || !ConfigValue.KB_SYNC) return;
+        if (sendTime == null) return;
+
+        // 这两个功能都需要Ping
+        if (!ConfigValue.KB_SYNC_ENABLED && !ConfigValue.SSHD_ENABLED) return;
 
         long now = System.currentTimeMillis();
         int ping = (int) (now - sendTime);

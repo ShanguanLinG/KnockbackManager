@@ -1,4 +1,4 @@
-package me.dw1e.kbm.listener;
+package me.dw1e.kbm.module;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketAdapter;
@@ -17,10 +17,12 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 
@@ -42,10 +44,9 @@ public final class HitDetection extends PacketAdapter implements Listener {
     private final LagCompensator lagCompensator;
 
     private AABB aabb;
-    private double survivalDist, creativeDist;
 
     public HitDetection(KnockbackManager plugin, LagCompensator lagCompensator) {
-        super(plugin, PacketType.Play.Client.USE_ENTITY);
+        super(plugin, PacketType.Play.Client.ARM_ANIMATION);
 
         this.plugin = plugin;
 
@@ -63,11 +64,11 @@ public final class HitDetection extends PacketAdapter implements Listener {
 
     @Override
     public void onPacketReceiving(PacketEvent event) {
-        if (!ConfigValue.HIT_DETECTION_ENABLED) return;
+        if (!ConfigValue.SSHD_ENABLED) return;
 
         // 为什么要单独注册这个数据包? 因为Bukkit Event呼的太晚了, 这时候冷却已经开始了
 
-        if (plugin.isAtLeast1_16() && event.getPacketType() == PacketType.Play.Client.USE_ENTITY) {
+        if (plugin.isAtLeast1_16() && event.getPacketType() == PacketType.Play.Client.ARM_ANIMATION) {
             Player player = event.getPlayer();
             PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
 
@@ -76,17 +77,14 @@ public final class HitDetection extends PacketAdapter implements Listener {
     }
 
     public void loadConfig() {
-        double length = ConfigValue.HIT_DETECTION_BOX_LENGTH;
-        double height = ConfigValue.HIT_DETECTION_BOX_HEIGHT;
+        double length = ConfigValue.SSHD_HITBOX_LENGTH;
+        double height = ConfigValue.SSHD_HITBOX_HEIGHT;
         aabb = new AABB(new Vector(-length / 2, 0, -length / 2), new Vector(length / 2, height, length / 2));
-
-        survivalDist = ConfigValue.HIT_DETECTION_MAX_DISTANCE_SURVIVAL;
-        creativeDist = ConfigValue.HIT_DETECTION_MAX_DISTANCE_CREATIVE;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void cancelDefaultHit(EntityDamageByEntityEvent event) {
-        if (!ConfigValue.HIT_DETECTION_ENABLED) return;
+        if (!ConfigValue.SSHD_ENABLED) return;
 
         if (event.getDamager() instanceof Player && event.getEntity() instanceof Player) {
             State state = getState(event.getDamager().getUniqueId());
@@ -97,7 +95,7 @@ public final class HitDetection extends PacketAdapter implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
-        if (!ConfigValue.HIT_DETECTION_ENABLED) return;
+        if (!ConfigValue.SSHD_ENABLED) return;
 
         Location from = event.getFrom(), to = event.getTo();
         if (to == null) return;
@@ -121,7 +119,7 @@ public final class HitDetection extends PacketAdapter implements Listener {
 
     @EventHandler
     public void onArmAnimation(PlayerAnimationEvent event) {
-        if (!ConfigValue.HIT_DETECTION_ENABLED) return;
+        if (!ConfigValue.SSHD_ENABLED) return;
 
         Player attacker = event.getPlayer();
         State state = getState(attacker.getUniqueId());
@@ -138,7 +136,9 @@ public final class HitDetection extends PacketAdapter implements Listener {
 
         Vector attackerPos = attackerLoc.toVector().add(new Vector(0, attacker.getEyeHeight(), 0));
 
-        double maxDist = attacker.getGameMode() == GameMode.CREATIVE ? creativeDist : survivalDist;
+        double maxDist = attacker.getGameMode() == GameMode.CREATIVE
+                ? ConfigValue.SSHD_MAX_DISTANCE_CREATIVE
+                : ConfigValue.SSHD_MAX_DISTANCE_SURVIVAL;
 
         double adder = 2;
         List<Entity> nearbyEntities = attacker.getNearbyEntities(maxDist + adder, maxDist + adder, maxDist + adder);
@@ -206,7 +206,7 @@ public final class HitDetection extends PacketAdapter implements Listener {
     }
 
     public void onTick() {
-        if (!ConfigValue.HIT_DETECTION_ENABLED) return;
+        if (!ConfigValue.SSHD_ENABLED) return;
 
         for (State state : states.values()) {
             if (state.event != null) {
@@ -221,6 +221,11 @@ public final class HitDetection extends PacketAdapter implements Listener {
                 state.noMoveTicks = 0;
             }
         }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        states.remove(event.getPlayer().getUniqueId());
     }
 
     private State getState(UUID uuid) {

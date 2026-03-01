@@ -4,21 +4,21 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public final class ConfigValue {
 
-    public static boolean KB_SYNC;
+    public static boolean KB_SYNC_ENABLED;
 
-    public static boolean HIT_DETECTION_ENABLED;
-    public static double HIT_DETECTION_BOX_LENGTH;
-    public static double HIT_DETECTION_BOX_HEIGHT;
-    public static double HIT_DETECTION_MAX_DISTANCE_SURVIVAL;
-    public static double HIT_DETECTION_MAX_DISTANCE_CREATIVE;
+    public static boolean SSHD_ENABLED;
+    public static double SSHD_HITBOX_LENGTH;
+    public static double SSHD_HITBOX_HEIGHT;
+    public static double SSHD_MAX_DISTANCE_SURVIVAL;
+    public static double SSHD_MAX_DISTANCE_CREATIVE;
 
     public static void updateConfig(FileConfiguration config) {
-        KB_SYNC = config.getBoolean("kb_sync");
+        KB_SYNC_ENABLED = config.getBoolean("kb_sync");
 
-        HIT_DETECTION_ENABLED = config.getBoolean("server_side_hit_detection.enabled");
-        HIT_DETECTION_BOX_LENGTH = config.getDouble("server_side_hit_detection.box_length");
-        HIT_DETECTION_BOX_HEIGHT = config.getDouble("server_side_hit_detection.box_height");
-        HIT_DETECTION_MAX_DISTANCE_SURVIVAL = config.getDouble("server_side_hit_detection.max_distance.survival");
-        HIT_DETECTION_MAX_DISTANCE_CREATIVE = config.getDouble("server_side_hit_detection.max_distance.creative");
+        SSHD_ENABLED = config.getBoolean("server_side_hit_detection.enabled");
+        SSHD_HITBOX_LENGTH = config.getDouble("server_side_hit_detection.hitbox_size.length");
+        SSHD_HITBOX_HEIGHT = config.getDouble("server_side_hit_detection.hitbox_size.height");
+        SSHD_MAX_DISTANCE_SURVIVAL = config.getDouble("server_side_hit_detection.max_distance.survival");
+        SSHD_MAX_DISTANCE_CREATIVE = config.getDouble("server_side_hit_detection.max_distance.creative");
     }
 }

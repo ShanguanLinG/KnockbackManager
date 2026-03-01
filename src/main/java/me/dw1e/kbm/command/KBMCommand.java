@@ -79,7 +79,7 @@ public final class KBMCommand implements TabExecutor {
             case "reload": {
                 if (args.length == 2) {
                     return filterStartingWith(Arrays.asList("config", "kb"), args[1]);
-                } else if (args.length == 3) {
+                } else if (args.length == 3 && args[1].equalsIgnoreCase("kb")) {
                     return filterStartingWith(fileNames, args[2]);
                 }
             }
@@ -464,9 +464,11 @@ public final class KBMCommand implements TabExecutor {
             if (section.isConfigurationSection(key)) {
                 builder.append("§e").append(indent).append(key).append("§f");
 
-                if (ConfigValue.HIT_DETECTION_ENABLED && key.equals("misplace")) {
+                if (key.equals("packet") && plugin.getProtocolManager() == null) {
+                    builder.append(": §c(未检测到ProtocolLib 5+)\n");
+                } else if (key.equals("misplace") && ConfigValue.SSHD_ENABLED) {
                     builder.append(": §c(与服务器端命中检测不兼容)\n");
-                } else if (!plugin.isAtLeast1_16() && key.equals("modern")) {
+                } else if (key.equals("modern") && !plugin.isAtLeast1_16()) {
                     builder.append(": §c(1.16+)\n");
                 } else {
                     builder.append(":\n");
