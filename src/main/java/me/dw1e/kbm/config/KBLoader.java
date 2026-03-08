@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class KBFile {
+public final class KBLoader {
 
     private final Path KB_PATH;
 
@@ -22,7 +22,7 @@ public final class KBFile {
     private final FileConfiguration defaultConfig;
     private final Map<String, KB> kbMap = new HashMap<>();
 
-    public KBFile(KnockbackManager plugin) {
+    public KBLoader(KnockbackManager plugin) {
         this.plugin = plugin;
 
         KB_PATH = plugin.getDataFolder().toPath().resolve("knockback");
@@ -47,7 +47,7 @@ public final class KBFile {
                 }
 
             } catch (IllegalArgumentException | IOException e) {
-                sender.sendMessage(KnockbackManager.PREFIX + " §c创建默认KB文件时发生错误!");
+                if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §c创建默认KB文件时发生错误!");
                 throw new RuntimeException(e.getMessage());
             }
         }
@@ -56,13 +56,11 @@ public final class KBFile {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(KB_PATH, "*.yml")) {
             for (Path path : stream) {
-                String name = path.getFileName().toString().replace(".yml", "");
+                KB kb = new KB(path.toFile());
+                kbMap.put(kb.getName(), kb);
 
-                KB kb = new KB(path.toFile(), YamlConfiguration.loadConfiguration(path.toFile()));
-                kbMap.put(name, kb);
-
-                String fileName = kb.file.getName();
-                FileConfiguration config = kb.config;
+                String fileName = kb.getFile().getName();
+                FileConfiguration config = kb.getConfig();
 
                 config.options().copyDefaults(true).copyHeader(true);
                 config.addDefaults(defaultConfig); // 将目前配置与默认配置比对, 查漏补缺
@@ -90,7 +88,7 @@ public final class KBFile {
                         });
 
                 try {
-                    config.save(kb.file);
+                    config.save(kb.getFile());
                 } catch (IOException e) {
                     sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + fileName + " 失败, 请查看控制台详细错误日志!");
                     throw new RuntimeException(e.getMessage());
@@ -134,7 +132,7 @@ public final class KBFile {
             throw new RuntimeException(e.getMessage());
         }
 
-        kbMap.put(filename, new KB(file, config));
+        kbMap.put(filename, new KB(file));
 
         sender.sendMessage(KnockbackManager.PREFIX + " §a创建 " + filename + " 成功!");
     }
@@ -154,7 +152,7 @@ public final class KBFile {
                 .filter(data -> data.getProfile().equals(filename))
                 .forEach(data -> data.setProfile("default"));
 
-        sender.sendMessage(KnockbackManager.PREFIX + (kbMap.get(filename).file.delete()
+        sender.sendMessage(KnockbackManager.PREFIX + (kbMap.get(filename).getFile().delete()
                 ? " §a删除 " + filename + " 成功!" : " §c删除 " + filename + " 失败!"));
 
         kbMap.remove(filename);
@@ -162,17 +160,18 @@ public final class KBFile {
 
     public void save(String filename, CommandSender sender) {
         if (!kbMap.containsKey(filename)) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 不存在!");
+            if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 不存在!");
             return;
         }
 
         try {
             KB kb = kbMap.get(filename);
 
-            kb.config.save(kb.file);
-            kb.profile.updateConfig(kb.config);
+            kb.getConfig().save(kb.getFile());
+            kb.getProfile().updateConfig(kb.getConfig());
         } catch (IOException e) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
+            if (sender != null)
+                sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -185,26 +184,27 @@ public final class KBFile {
                     .filter(data -> !kbMap.containsKey(data.getProfile()))
                     .forEach(data -> data.setProfile("default"));
 
-            sender.sendMessage(KnockbackManager.PREFIX + " §a已重载所有KB文件!");
+            if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §a已重载所有KB文件!");
             return;
         }
 
         if (!kbMap.containsKey(filename)) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 不存在!");
+            if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 不存在!");
             return;
         }
 
         try {
             KB kb = kbMap.get(filename);
 
-            kb.config.load(kb.file);
-            kb.profile.updateConfig(kb.config);
+            kb.getConfig().load(kb.getFile());
+            kb.getProfile().updateConfig(kb.getConfig());
         } catch (Exception e) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §c重载 " + filename + " 失败, 请查看控制台详细错误日志!");
+            if (sender != null)
+                sender.sendMessage(KnockbackManager.PREFIX + " §c重载 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
         }
 
-        sender.sendMessage(KnockbackManager.PREFIX + " §a重载 " + filename + " 成功!");
+        if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §a重载 " + filename + " 成功!");
     }
 
     public Map<String, KB> getKbMap() {
@@ -213,23 +213,12 @@ public final class KBFile {
 
     public FileConfiguration getConfig(String name) {
         KB kb = kbMap.get(name);
-        return kb != null ? kb.config : null;
+        return kb != null ? kb.getConfig() : null;
     }
 
     public KBProfile getProfile(String name) {
         KB kb = kbMap.get(name);
-        return kb != null ? kb.profile : null;
+        return kb != null ? kb.getProfile() : null;
     }
 
-    public static final class KB {
-        private final File file;
-        private final FileConfiguration config;
-        private final KBProfile profile;
-
-        public KB(File file, FileConfiguration config) {
-            this.file = file;
-            this.config = config;
-            this.profile = new KBProfile(config);
-        }
-    }
 }

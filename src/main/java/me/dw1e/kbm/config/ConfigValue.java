@@ -13,7 +13,7 @@ public final class ConfigValue {
     public static double SSHD_MAX_DISTANCE_CREATIVE;
 
     public static void updateConfig(FileConfiguration config) {
-        KB_SYNC_ENABLED = config.getBoolean("kb_sync");
+        KB_SYNC_ENABLED = config.getBoolean("kb_sync.enabled");
 
         SSHD_ENABLED = config.getBoolean("server_side_hit_detection.enabled");
         SSHD_HITBOX_LENGTH = config.getDouble("server_side_hit_detection.hitbox_size.length");

@@ -70,7 +70,7 @@ public final class MisplaceHandler extends PacketAdapter {
         int entityId = integers.read(0);
         if (entityId == viewer.getEntityId()) return;
 
-        KBProfile profile = plugin.getKbFile().getProfile(viewerData.getProfile());
+        KBProfile profile = plugin.getKBLoader().getProfile(viewerData.getProfile());
         if (profile == null) return;
 
         int tick = plugin.getTick();

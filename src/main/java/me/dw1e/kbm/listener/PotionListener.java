@@ -36,7 +36,7 @@ public final class PotionListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.isExcluded()) return;
 
-        KBProfile profile = plugin.getKbFile().getProfile(data.getProfile());
+        KBProfile profile = plugin.getKBLoader().getProfile(data.getProfile());
         if (profile == null) return;
 
         if (profile.POTION_ENABLED && data.isSprinting()) {
@@ -68,7 +68,7 @@ public final class PotionListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.isExcluded()) return;
 
-        KBProfile profile = plugin.getKbFile().getProfile(data.getProfile());
+        KBProfile profile = plugin.getKBLoader().getProfile(data.getProfile());
         if (profile == null) return;
 
         if (profile.POTION_ENABLED) {

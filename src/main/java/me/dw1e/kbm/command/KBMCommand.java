@@ -29,6 +29,11 @@ public final class KBMCommand implements TabExecutor {
             "modern.cooldown_affects_kb", "modern.netherite_kb_resistance"
     );
 
+    private static final List<String> COMMANDS = Arrays.asList(
+            "create", "delete", "list", "edit", "view", "reload", "gui",
+            "getprofile", "setprofile", "setexcluded", "help", "debug"
+    );
+
     private final KnockbackManager plugin;
 
     public KBMCommand(KnockbackManager plugin) {
@@ -40,13 +45,10 @@ public final class KBMCommand implements TabExecutor {
         if (!sender.hasPermission("kbm.use")) return Collections.emptyList();
 
         if (args.length == 1) {
-            return filterStartingWith(Arrays.asList(
-                    "create", "delete", "list", "edit", "view", "reload",
-                    "getprofile", "setprofile", "setexcluded", "help", "debug"
-            ), args[0]);
+            return filterStartingWith(COMMANDS, args[0]);
         }
 
-        List<String> fileNames = new ArrayList<>(plugin.getKbFile().getKbMap().keySet());
+        List<String> fileNames = new ArrayList<>(plugin.getKBLoader().getKbMap().keySet());
         List<String> onlinePlayers = Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList());
 
         String subCmd = args[0].toLowerCase();
@@ -135,6 +137,7 @@ public final class KBMCommand implements TabExecutor {
                 sender.sendMessage(same + " edit§7: 编辑KB文件的数值");
                 sender.sendMessage(same + " view§7: 查看KB文件的数值");
                 sender.sendMessage(same + " reload§7: 重新加载KB文件");
+                sender.sendMessage(same + " gui§7: 打开GUI界面");
                 sender.sendMessage(same + " getprofile§7: 查看玩家使用的KB文件");
                 sender.sendMessage(same + " setprofile§7: 设置玩家使用的KB文件");
                 sender.sendMessage(same + " setexcluded§7: 设置玩家是否该被排除修改");
@@ -150,7 +153,7 @@ public final class KBMCommand implements TabExecutor {
                     return true;
                 }
 
-                plugin.getKbFile().create(args[1], sender);
+                plugin.getKBLoader().create(args[1], sender);
 
                 return true;
             }
@@ -160,14 +163,14 @@ public final class KBMCommand implements TabExecutor {
                     return true;
                 }
 
-                plugin.getKbFile().delete(args[1], sender);
+                plugin.getKBLoader().delete(args[1], sender);
 
                 return true;
             }
             case "list": {
                 sender.sendMessage(prefix + " §7已读取的KB文件:");
 
-                plugin.getKbFile().getKbMap().keySet().forEach(filename -> sender.sendMessage("  §f" + filename));
+                plugin.getKBLoader().getKbMap().keySet().forEach(filename -> sender.sendMessage("  §f" + filename));
 
                 return true;
             }
@@ -177,7 +180,7 @@ public final class KBMCommand implements TabExecutor {
                     return true;
                 }
 
-                FileConfiguration config = plugin.getKbFile().getConfig(args[1]);
+                FileConfiguration config = plugin.getKBLoader().getConfig(args[1]);
 
                 if (config == null) {
                     sender.sendMessage(prefix + " §cKB文件 " + args[1] + " 不存在!");
@@ -282,7 +285,7 @@ public final class KBMCommand implements TabExecutor {
                         ? " §c无变化. " + args[1] + " 中的 " + type + " 原已设置为 " + config.get(type)
                         : " §7已将 §f" + args[1] + " §7中的 §f" + type + " §7设置为 §f" + config.get(type)));
 
-                plugin.getKbFile().save(args[1], sender);
+                plugin.getKBLoader().save(args[1], sender);
 
                 return true;
             }
@@ -292,7 +295,7 @@ public final class KBMCommand implements TabExecutor {
                     return true;
                 }
 
-                if (!plugin.getKbFile().getKbMap().containsKey(args[1])) {
+                if (!plugin.getKBLoader().getKbMap().containsKey(args[1])) {
                     sender.sendMessage(prefix + " §cKB文件 " + args[1] + " 不存在!");
                     return true;
                 }
@@ -301,7 +304,7 @@ public final class KBMCommand implements TabExecutor {
 
                 StringBuilder message = new StringBuilder();
 
-                formatConfigSection(message, plugin.getKbFile().getConfig(args[1]), 1);
+                formatConfigSection(message, plugin.getKBLoader().getConfig(args[1]), 1);
 
                 for (String line : message.toString().split("\n"))
                     sender.sendMessage("§e" + line);
@@ -329,13 +332,24 @@ public final class KBMCommand implements TabExecutor {
                         return true;
                     }
 
-                    plugin.getKbFile().reload(args[2], sender);
+                    plugin.getKBLoader().reload(args[2], sender);
+                    plugin.getGuiManager().disable();
+                    plugin.getGuiManager().enable();
                     return true;
 
                 } else {
                     sender.sendMessage(KnockbackManager.PREFIX + " §c未知部分: " + args[1]);
                     return true;
                 }
+            }
+            case "gui": {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage(KnockbackManager.PREFIX + " §c此命令仅玩家可使用!");
+                    return false;
+                }
+
+                plugin.getGuiManager().getMainGui().openGui((Player) sender);
+                return true;
             }
             case "getprofile": {
                 if (args.length != 2) {
@@ -363,7 +377,7 @@ public final class KBMCommand implements TabExecutor {
                     return true;
                 }
 
-                if (!plugin.getKbFile().getKbMap().containsKey(args[2])) {
+                if (!plugin.getKBLoader().getKbMap().containsKey(args[2])) {
                     sender.sendMessage(prefix + " §cKB文件 " + args[2] + " 不存在!");
                     return true;
                 }

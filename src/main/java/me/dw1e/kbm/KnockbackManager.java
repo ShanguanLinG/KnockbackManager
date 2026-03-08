@@ -7,8 +7,9 @@ import me.dw1e.kbm.api.DefaultKnockbackManagerAPI;
 import me.dw1e.kbm.api.KnockbackManagerAPI;
 import me.dw1e.kbm.command.KBMCommand;
 import me.dw1e.kbm.config.ConfigValue;
-import me.dw1e.kbm.config.KBFile;
+import me.dw1e.kbm.config.KBLoader;
 import me.dw1e.kbm.data.DataManager;
+import me.dw1e.kbm.gui.GuiManager;
 import me.dw1e.kbm.listener.PlayerStateListener;
 import me.dw1e.kbm.listener.PotionListener;
 import me.dw1e.kbm.listener.VelocityListener;
@@ -41,17 +42,18 @@ public final class KnockbackManager extends JavaPlugin {
     private DataManager dataManager;
     private MisplaceHandler misplaceHandler;
     private PingHandler pingHandler;
-    private KBFile kbFile;
+    private KBLoader kbLoader;
     private KBMPlaceholder kbmPlaceholder;
     private LagCompensator lagCompensator;
     private HitDetection hitDetection;
+    private GuiManager guiManager;
 
     private ProtocolManager protocolManager;
 
     private int tick;
     private BukkitTask tickTask;
 
-    private boolean isAtLeast1_16, isAtLeast1_17;
+    private boolean isAtLeast1_13, isAtLeast1_16, isAtLeast1_17;
 
     public static KnockbackManager getInstance() {
         return instance;
@@ -70,8 +72,8 @@ public final class KnockbackManager extends JavaPlugin {
         saveDefaultConfig();
         ConfigValue.updateConfig(getConfig());
 
-        kbFile = new KBFile(this);
-        kbFile.load(Bukkit.getConsoleSender());
+        kbLoader = new KBLoader(this);
+        kbLoader.load(Bukkit.getConsoleSender());
 
         dataManager = new DataManager();
         dataManager.enable();
@@ -87,8 +89,9 @@ public final class KnockbackManager extends JavaPlugin {
         if (protocolManager != null) {
             MinecraftVersion version = protocolManager.getMinecraftVersion();
 
-            isAtLeast1_16 = version.isAtLeast(MinecraftVersion.NETHER_UPDATE);
-            isAtLeast1_17 = version.isAtLeast(MinecraftVersion.CAVES_CLIFFS_1);
+            isAtLeast1_13 = version.isAtLeast(MinecraftVersion.AQUATIC_UPDATE); // Material 更新
+            isAtLeast1_16 = version.isAtLeast(MinecraftVersion.NETHER_UPDATE); // API 版本
+            isAtLeast1_17 = version.isAtLeast(MinecraftVersion.CAVES_CLIFFS_1); // 数据包 更新
 
             misplaceHandler = new MisplaceHandler(this);
             misplaceHandler.enable();
@@ -103,6 +106,9 @@ public final class KnockbackManager extends JavaPlugin {
         }
 
         listeners.forEach(listener -> Bukkit.getPluginManager().registerEvents(listener, this));
+
+        guiManager = new GuiManager();
+        guiManager.enable();
 
         PluginCommand pluginCommand = getCommand("kbm");
         if (pluginCommand != null) {
@@ -124,6 +130,11 @@ public final class KnockbackManager extends JavaPlugin {
     @Override
     public void onDisable() {
         HandlerList.unregisterAll(this);
+
+        if (guiManager != null) {
+            guiManager.disable();
+            guiManager = null;
+        }
 
         if (hitDetection != null) {
             hitDetection.disable();
@@ -161,7 +172,7 @@ public final class KnockbackManager extends JavaPlugin {
             dataManager = null;
         }
 
-        kbFile = null;
+        kbLoader = null;
 
         instance = null;
     }
@@ -205,12 +216,16 @@ public final class KnockbackManager extends JavaPlugin {
         return dataManager;
     }
 
+    public GuiManager getGuiManager() {
+        return guiManager;
+    }
+
     public MisplaceHandler getPacketHandler() {
         return misplaceHandler;
     }
 
-    public KBFile getKbFile() {
-        return kbFile;
+    public KBLoader getKBLoader() {
+        return kbLoader;
     }
 
     public int getTick() {
@@ -219,6 +234,10 @@ public final class KnockbackManager extends JavaPlugin {
 
     public ProtocolManager getProtocolManager() {
         return protocolManager;
+    }
+
+    public boolean isAtLeast1_13() {
+        return isAtLeast1_13;
     }
 
     public boolean isAtLeast1_16() {

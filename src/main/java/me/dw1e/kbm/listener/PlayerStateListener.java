@@ -2,6 +2,7 @@ package me.dw1e.kbm.listener;
 
 import me.dw1e.kbm.KnockbackManager;
 import me.dw1e.kbm.data.PlayerData;
+import me.dw1e.kbm.gui.Gui;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -10,7 +11,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.projectiles.ProjectileSource;
 
 public final class PlayerStateListener implements Listener {
@@ -104,6 +107,21 @@ public final class PlayerStateListener implements Listener {
 
         // 将最后地面Y轴设置为传送位置, 修复: 在传送后从未移动过时, 第一次被攻击, 会误触 y_limit 的问题
         if (data != null) data.setLastGroundY(to.getY());
+    }
+
+    @EventHandler // GUI中的点击事件
+    private void onInventoryClick(InventoryClickEvent event) {
+        Inventory top = event.getView().getTopInventory();
+
+        if (top.getHolder() instanceof Gui) {
+            event.setCancelled(true);
+
+            Inventory clicked = event.getClickedInventory();
+
+            if (clicked != null && clicked.equals(top)) {
+                ((Gui) clicked.getHolder()).onClick(event);
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

@@ -46,7 +46,7 @@ public final class VelocityListener implements Listener {
         boolean isProjectileHit = false, isSelfShootHit = false;
         int arrowStrength = 0; // 弓箭上的'冲击'附魔等级
 
-        KBProfile profile = plugin.getKbFile().getProfile(victimData.getProfile());
+        KBProfile profile = plugin.getKBLoader().getProfile(victimData.getProfile());
         if (profile == null) return;
 
         if (source instanceof LivingEntity) { // 玩家造成的击退
