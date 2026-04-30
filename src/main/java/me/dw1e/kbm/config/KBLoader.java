@@ -47,7 +47,7 @@ public final class KBLoader {
                 }
 
             } catch (IllegalArgumentException | IOException e) {
-                if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §c创建默认KB文件时发生错误!");
+                if (sender != null) sender.sendMessage(ConfigValue.PREFIX + " §c创建默认KB文件时发生错误!");
                 throw new RuntimeException(e.getMessage());
             }
         }
@@ -90,20 +90,20 @@ public final class KBLoader {
                 try {
                     config.save(kb.getFile());
                 } catch (IOException e) {
-                    sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + fileName + " 失败, 请查看控制台详细错误日志!");
+                    sender.sendMessage(ConfigValue.PREFIX + " §c保存 " + fileName + " 失败, 请查看控制台详细错误日志!");
                     throw new RuntimeException(e.getMessage());
                 }
             }
 
         } catch (IOException e) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §c读取KB文件夹时发生错误!");
+            sender.sendMessage(ConfigValue.PREFIX + " §c读取KB文件夹时发生错误!");
             throw new RuntimeException(e);
         }
     }
 
     public void create(String filename, CommandSender sender) {
         if (kbMap.containsKey(filename)) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 已存在!");
+            sender.sendMessage(ConfigValue.PREFIX + " §cKB文件 " + filename + " 已存在!");
             return;
         }
 
@@ -112,10 +112,10 @@ public final class KBLoader {
         if (file.getParentFile().mkdir()) {
             try {
                 if (!file.createNewFile()) {
-                    sender.sendMessage(KnockbackManager.PREFIX + " §c创建KB文件 " + filename + " 失败!");
+                    sender.sendMessage(ConfigValue.PREFIX + " §c创建KB文件 " + filename + " 失败!");
                 }
             } catch (IOException e) {
-                sender.sendMessage(KnockbackManager.PREFIX + " §c创建KB文件 " + filename + " 失败, 请查看控制台详细错误日志!");
+                sender.sendMessage(ConfigValue.PREFIX + " §c创建KB文件 " + filename + " 失败, 请查看控制台详细错误日志!");
                 throw new RuntimeException(e.getMessage());
             }
         }
@@ -128,23 +128,23 @@ public final class KBLoader {
         try {
             config.save(file);
         } catch (IOException e) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
+            sender.sendMessage(ConfigValue.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
         }
 
         kbMap.put(filename, new KB(file));
 
-        sender.sendMessage(KnockbackManager.PREFIX + " §a创建 " + filename + " 成功!");
+        sender.sendMessage(ConfigValue.PREFIX + " §a创建 " + filename + " 成功!");
     }
 
     public void delete(String filename, CommandSender sender) {
         if (filename.equals("default")) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §c默认KB文件不允许删除!");
+            sender.sendMessage(ConfigValue.PREFIX + " §c默认KB文件不允许删除!");
             return;
         }
 
         if (!kbMap.containsKey(filename)) {
-            sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 不存在!");
+            sender.sendMessage(ConfigValue.PREFIX + " §cKB文件 " + filename + " 不存在!");
             return;
         }
 
@@ -152,7 +152,7 @@ public final class KBLoader {
                 .filter(data -> data.getProfile().equals(filename))
                 .forEach(data -> data.setProfile("default"));
 
-        sender.sendMessage(KnockbackManager.PREFIX + (kbMap.get(filename).getFile().delete()
+        sender.sendMessage(ConfigValue.PREFIX + (kbMap.get(filename).getFile().delete()
                 ? " §a删除 " + filename + " 成功!" : " §c删除 " + filename + " 失败!"));
 
         kbMap.remove(filename);
@@ -160,7 +160,7 @@ public final class KBLoader {
 
     public void save(String filename, CommandSender sender) {
         if (!kbMap.containsKey(filename)) {
-            if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 不存在!");
+            if (sender != null) sender.sendMessage(ConfigValue.PREFIX + " §cKB文件 " + filename + " 不存在!");
             return;
         }
 
@@ -171,7 +171,7 @@ public final class KBLoader {
             kb.getProfile().updateConfig(kb.getConfig());
         } catch (IOException e) {
             if (sender != null)
-                sender.sendMessage(KnockbackManager.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
+                sender.sendMessage(ConfigValue.PREFIX + " §c保存 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -184,12 +184,12 @@ public final class KBLoader {
                     .filter(data -> !kbMap.containsKey(data.getProfile()))
                     .forEach(data -> data.setProfile("default"));
 
-            if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §a已重载所有KB文件!");
+            if (sender != null) sender.sendMessage(ConfigValue.PREFIX + " §a已重载所有KB文件!");
             return;
         }
 
         if (!kbMap.containsKey(filename)) {
-            if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §cKB文件 " + filename + " 不存在!");
+            if (sender != null) sender.sendMessage(ConfigValue.PREFIX + " §cKB文件 " + filename + " 不存在!");
             return;
         }
 
@@ -200,11 +200,11 @@ public final class KBLoader {
             kb.getProfile().updateConfig(kb.getConfig());
         } catch (Exception e) {
             if (sender != null)
-                sender.sendMessage(KnockbackManager.PREFIX + " §c重载 " + filename + " 失败, 请查看控制台详细错误日志!");
+                sender.sendMessage(ConfigValue.PREFIX + " §c重载 " + filename + " 失败, 请查看控制台详细错误日志!");
             throw new RuntimeException(e.getMessage());
         }
 
-        if (sender != null) sender.sendMessage(KnockbackManager.PREFIX + " §a重载 " + filename + " 成功!");
+        if (sender != null) sender.sendMessage(ConfigValue.PREFIX + " §a重载 " + filename + " 成功!");
     }
 
     public Map<String, KB> getKbMap() {

@@ -39,15 +39,14 @@ public final class KBMPlaceholder extends PlaceholderExpansion {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null) return "玩家数据未加载";
 
-        if (identifier.equals("current_profile")) {
-            return data.getProfile();
+        switch (identifier) {
+            case "current_profile":
+                return data.getProfile();
+            case "excluded":
+                return String.valueOf(data.isExcluded());
+            default:
+                return null;
         }
-
-        if (identifier.equals("excluded")) {
-            return String.valueOf(data.isExcluded());
-        }
-
-        return null;
     }
 
 }

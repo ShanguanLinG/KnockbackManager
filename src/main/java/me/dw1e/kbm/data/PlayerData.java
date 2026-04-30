@@ -147,7 +147,7 @@ public final class PlayerData {
     }
 
     public void sendDebugMessage(String message) {
-        if (debugging) player.sendMessage(KnockbackManager.PREFIX + " §8[§3Debug§8] §7" + message);
+        if (debugging) player.sendMessage(ConfigValue.PREFIX + " §8[§3Debug§8] §7" + message);
     }
 
     public Map<Integer, Long> getTimeline() {

@@ -113,7 +113,7 @@ public final class KBMCommand implements TabExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        String prefix = KnockbackManager.PREFIX;
+        String prefix = ConfigValue.PREFIX;
 
         if (!sender.hasPermission("kbm.use")) {
             sender.sendMessage(prefix + " §c你没有此命令的使用权限!");
@@ -323,7 +323,7 @@ public final class KBMCommand implements TabExecutor {
 
                 if (input.equals("config")) {
                     plugin.reload();
-                    sender.sendMessage(KnockbackManager.PREFIX + " §a主配置文件已重载!");
+                    sender.sendMessage(ConfigValue.PREFIX + " §a主配置文件已重载!");
                     return true;
 
                 } else if (input.equals("kb")) {
@@ -338,13 +338,13 @@ public final class KBMCommand implements TabExecutor {
                     return true;
 
                 } else {
-                    sender.sendMessage(KnockbackManager.PREFIX + " §c未知部分: " + args[1]);
+                    sender.sendMessage(ConfigValue.PREFIX + " §c未知部分: " + args[1]);
                     return true;
                 }
             }
             case "gui": {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage(KnockbackManager.PREFIX + " §c此命令仅玩家可使用!");
+                    sender.sendMessage(ConfigValue.PREFIX + " §c此命令仅玩家可使用!");
                     return false;
                 }
 

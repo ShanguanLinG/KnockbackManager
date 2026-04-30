@@ -1,6 +1,7 @@
 package me.dw1e.kbm.gui.impl;
 
 import me.dw1e.kbm.KnockbackManager;
+import me.dw1e.kbm.config.ConfigValue;
 import me.dw1e.kbm.gui.Gui;
 import me.dw1e.kbm.gui.ItemBuilder;
 import org.bukkit.Material;
@@ -35,7 +36,7 @@ public final class MainGui extends Gui {
         if (value == 10) {
             kbm.reload();
 
-            clicker.sendMessage(KnockbackManager.PREFIX + " §a已重载主配置文件");
+            clicker.sendMessage(ConfigValue.PREFIX + " §a已重载主配置文件");
 
             clicker.closeInventory();
         } else if (value == 13) {

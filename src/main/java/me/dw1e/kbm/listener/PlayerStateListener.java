@@ -1,6 +1,7 @@
 package me.dw1e.kbm.listener;
 
 import me.dw1e.kbm.KnockbackManager;
+import me.dw1e.kbm.config.ConfigValue;
 import me.dw1e.kbm.data.PlayerData;
 import me.dw1e.kbm.gui.Gui;
 import org.bukkit.Location;
@@ -118,7 +119,7 @@ public final class PlayerStateListener implements Listener {
 
             Inventory clicked = event.getClickedInventory();
 
-            if (clicked != null && clicked.equals(top)) {
+            if (clicked != null && clicked.getHolder() != null && clicked.equals(top)) {
                 ((Gui) clicked.getHolder()).onClick(event);
             }
         }
@@ -135,7 +136,7 @@ public final class PlayerStateListener implements Listener {
             case "/knockbackmanager:kb":
             case "/knockbackmanager:kbm":
             case "/knockbackmanager:knockback":
-                event.getPlayer().sendMessage(KnockbackManager.PREFIX + " §7此服务器正在使用 §fKnockback Manager§7(v"
+                event.getPlayer().sendMessage(ConfigValue.PREFIX + " §7此服务器正在使用 §fKnockback Manager§7(v"
                         + plugin.getDescription().getVersion() + ") 击退修改插件");
                 break;
         }

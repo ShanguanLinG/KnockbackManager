@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+// 基于 Islandscout 的 ServerSideHitDetection
 public final class HitDetection extends PacketAdapter implements Listener {
 
     // 1.8没有攻击冷却, 但是我懒得把这些拆开了

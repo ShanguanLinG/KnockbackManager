@@ -4,6 +4,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public final class ConfigValue {
 
+    public static final String PREFIX = "§8[§eKBM§8]";
+
     public static boolean KB_SYNC_ENABLED;
 
     public static boolean SSHD_ENABLED;

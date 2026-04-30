@@ -32,8 +32,6 @@ import java.util.Set;
 
 public final class KnockbackManager extends JavaPlugin {
 
-    public static final String PREFIX = "§8[§eKBM§8]";
-
     private static KnockbackManager instance;
 
     private final Set<Listener> listeners = new HashSet<>();
@@ -249,6 +247,6 @@ public final class KnockbackManager extends JavaPlugin {
     }
 
     public void consoleLog(String s) {
-        Bukkit.getConsoleSender().sendMessage(PREFIX + " " + s);
+        Bukkit.getConsoleSender().sendMessage(ConfigValue.PREFIX + " " + s);
     }
 }
