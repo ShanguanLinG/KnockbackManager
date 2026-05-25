@@ -33,7 +33,9 @@ public final class PlayerData {
 
     private float cacheCooldown;
 
-    private int lastAttackTick, lastAttackedByOtherTick;
+    private int lastAttackTick;
+    private int lastAttackedByOtherTick;
+    private int lastDamageTick;
 
     private Player target, attacker;
 
@@ -128,6 +130,14 @@ public final class PlayerData {
 
     public void setLastAttackTick(int tick) {
         this.lastAttackTick = tick;
+    }
+
+    public int getLastDamageTick() {
+        return lastDamageTick;
+    }
+
+    public void setLastDamageTick(int tick) {
+        this.lastDamageTick = tick;
     }
 
     public Player getTarget() {

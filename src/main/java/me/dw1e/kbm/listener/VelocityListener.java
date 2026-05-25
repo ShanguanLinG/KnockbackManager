@@ -40,6 +40,8 @@ public final class VelocityListener implements Listener {
         PlayerData victimData = plugin.getDataManager().getData(victim.getUniqueId());
         if (victimData == null || victimData.isExcluded()) return;
 
+        victimData.setLastDamageTick(plugin.getTick());
+
         Entity source = event.getDamager();
         LivingEntity attackerEntity;
 
@@ -214,15 +216,19 @@ public final class VelocityListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(player.getUniqueId());
         if (data == null || data.getVelocity() == null) return;
 
-        // 替换击退为本插件修改过后的击退
-        event.setVelocity(data.getVelocity());
+        // 修复一些问题, 例如摔伤时可能被错误修改成玩家造成的击退
+        // 这里不需要什么延迟补偿, 这都是服务器端的, 玩家延迟不影响
+        if (plugin.getTick() == data.getLastDamageTick()) {
+            // 替换击退为本插件修改过后的击退
+            event.setVelocity(data.getVelocity());
+        }
 
         // 清空缓存的击退
         data.setVelocity(null);
     }
 
     private boolean computeSprint(KBProfile profile, LivingEntity attackerEntity) {
-        // 只有玩家可以将疾跑, 其它生物造成的均为非疾跑击退
+        // 只有玩家可以疾跑, 其它生物造成的均为非疾跑击退
         if (!(attackerEntity instanceof Player)) return false;
 
         Player attackerPlayer = (Player) attackerEntity;
