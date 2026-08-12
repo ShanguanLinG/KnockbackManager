@@ -95,8 +95,10 @@ public final class PlayerStateListener implements Listener {
         PlayerData data = plugin.getDataManager().getData(event.getPlayer().getUniqueId());
         if (data == null) return;
 
-        // 记录玩家最后一次触碰到地面的Y轴坐标
-        if (data.isOnGround()) data.setLastGroundY(to.getY());
+        if (data.isOnGround()) {
+            data.setLastGroundY(to.getY()); // 记录玩家最后一次触碰到地面的Y轴坐标
+            data.setTouchedTop(false); // 碰地则结束触顶
+        }
     }
 
     @EventHandler

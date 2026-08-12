@@ -24,7 +24,9 @@ public final class KBMCommand implements TabExecutor {
             "vertical.ground", "vertical.air", "vertical.sprint_extra",
             "projectile.enabled", "projectile.horizontal_multiplier", "projectile.vertical_multiplier", "projectile.direction_override",
             "packet.misplace.enabled", "packet.misplace.distance", "packet.delay.enabled", "packet.delay.ticks",
-            "stop_sprint", "y_limit", "hit_delay",
+            "stop_sprint",
+            "y_limit.enabled", "y_limit.max_y_height", "y_limit.vertical_kb_after_limit",
+            "hit_delay",
             "potion.enabled", "potion.horizontal_multiplier", "potion.vertical_multiplier", "potion.compensation_multiplier",
             "modern.cooldown_affects_kb", "modern.netherite_kb_resistance"
     );
@@ -68,6 +70,7 @@ public final class KBMCommand implements TabExecutor {
                         case "packet.misplace.enabled":
                         case "packet.delay.enabled":
                         case "stop_sprint":
+                        case "y_limit.enabled":
                         case "projectile.enabled":
                         case "projectile.direction_override":
                         case "potion.enabled":
@@ -200,6 +203,7 @@ public final class KBMCommand implements TabExecutor {
                     case "packet.misplace.enabled":
                     case "packet.delay.enabled":
                     case "stop_sprint":
+                    case "y_limit.enabled":
                     case "projectile.enabled":
                     case "projectile.direction_override":
                     case "potion.enabled":
@@ -272,6 +276,9 @@ public final class KBMCommand implements TabExecutor {
                             return true;
                         } else if (type.equals("potion.vertical_multiplier") && (value < -7.0 || value > 7.0)) {
                             sender.sendMessage(prefix + " §c不在范围(-7.0~7.0)内的数值: " + value);
+                            return true;
+                        } else if (type.equals("y_limit.vertical_kb_after_limit") && value > 0.0) {
+                            sender.sendMessage(prefix + " §c范围: 0及以下, 例如: -0.15, 当前为: " + value);
                             return true;
                         }
 

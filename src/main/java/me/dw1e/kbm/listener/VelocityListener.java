@@ -193,8 +193,15 @@ public final class VelocityListener implements Listener {
         }
 
         // Y 轴击退限制
-        if (!isProjectileHit && victimLoc.getY() - victimData.getLastGroundY() > profile.Y_LIMIT) {
-            velocity.setY(0.0);
+        if (!isProjectileHit && profile.Y_LIMIT_ENABLED) {
+
+            // 触顶判定
+            if (victimLoc.getY() - victimData.getLastGroundY() > profile.Y_LIMIT_MAX_HEIGHT) {
+                victimData.setTouchedTop(true);
+            }
+
+            // 在触顶后, 还没落地时, 一直使用负击退
+            if (victimData.isTouchedTop()) velocity.setY(profile.Y_LIMIT_VERTICAL_KB);
         }
 
         KBMPlayerVelocityEvent velocityEvent = new KBMPlayerVelocityEvent(victim, velocity);

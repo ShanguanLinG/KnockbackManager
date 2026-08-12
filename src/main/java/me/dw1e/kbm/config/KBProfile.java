@@ -24,7 +24,9 @@ public final class KBProfile {
 
     public boolean STOP_SPRINT;
 
-    public double Y_LIMIT;
+    public boolean Y_LIMIT_ENABLED;
+    public double Y_LIMIT_MAX_HEIGHT;
+    public double Y_LIMIT_VERTICAL_KB;
 
     public int HIT_DELAY;
 
@@ -61,7 +63,9 @@ public final class KBProfile {
 
         STOP_SPRINT = config.getBoolean("stop_sprint");
 
-        Y_LIMIT = config.getDouble("y_limit");
+        Y_LIMIT_ENABLED = config.getBoolean("y_limit.enabled");
+        Y_LIMIT_MAX_HEIGHT = config.getDouble("y_limit.max_y_height");
+        Y_LIMIT_VERTICAL_KB = config.getDouble("y_limit.vertical_kb_after_limit");
 
         HIT_DELAY = config.getInt("hit_delay");
 

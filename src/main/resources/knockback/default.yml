@@ -41,8 +41,13 @@ packet:
 # 重置疾跑
 stop_sprint: true
 
-# 击退造成的 Y 轴高度限制 (单位: 格)
-y_limit: 0.675
+y_limit:
+  # 是否启用 Y 轴高度限制?
+  enabled: true
+  # 最大 Y 轴高度限制 (单位: 格)
+  max_y_height: 0.675
+  # 超过最大 Y 轴高度后, 将垂直击退调整为此值 (范围: 0及以下, 例如: -0.15)
+  vertical_kb_after_limit: 0.0
 
 # 攻击间隔 (单位: 游戏刻)
 hit_delay: 20

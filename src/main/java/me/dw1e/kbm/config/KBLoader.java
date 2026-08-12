@@ -65,11 +65,23 @@ public final class KBLoader {
                 config.options().copyDefaults(true).copyHeader(true);
                 config.addDefaults(defaultConfig); // 将目前配置与默认配置比对, 查漏补缺
 
+                // 更新配置
+                if (config.getDouble("y_limit") > 0.0) {
+                    double value = config.getDouble("y_limit");
+
+                    config.set("y_limit.enabled", true);
+                    config.set("y_limit.max_y_height", value);
+                    config.set("vertical_kb_after_limit", 0.0);
+
+                    plugin.consoleLog("§a已更新KB配置 " + kb.getName());
+                }
+
                 // 限制最大数值
                 config.set("packet.misplace.distance", Math.max(0.0, Math.min(1.0, config.getDouble("packet.misplace.distance"))));
                 config.set("packet.delay.ticks", Math.max(1, Math.min(5, config.getInt("packet.delay.ticks"))));
                 config.set("potion.horizontal_multiplier", Math.max(-8.0, Math.min(8.0, config.getDouble("potion.horizontal_multiplier"))));
                 config.set("potion.vertical_multiplier", Math.max(-7.0, Math.min(7.0, config.getDouble("potion.vertical_multiplier"))));
+                config.set("y_limit.vertical_kb_after_limit", Math.min(0, config.getDouble("y_limit.vertical_kb_after_limit")));
 
                 // 删除无用的数值
                 config.getKeys(true).stream()

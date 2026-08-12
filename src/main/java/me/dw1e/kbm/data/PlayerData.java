@@ -30,6 +30,7 @@ public final class PlayerData {
 
     private boolean sprinting;
     private double lastGroundY;
+    private boolean touchedTop;
 
     private float cacheCooldown;
 
@@ -106,6 +107,14 @@ public final class PlayerData {
 
     public void setLastGroundY(double y) {
         this.lastGroundY = y;
+    }
+
+    public boolean isTouchedTop() {
+        return touchedTop;
+    }
+
+    public void setTouchedTop(boolean touchedTop) {
+        this.touchedTop = touchedTop;
     }
 
     public Vector getVelocity() {
