@@ -57,7 +57,10 @@ public final class VelocityListener implements Listener {
         } else if (source instanceof Projectile) { // 投掷物造成的击退
             if (source instanceof EnderPearl) return;
 
-            if (!profile.PROJECTILE_ENABLED) return; // 未启用投掷物击退修改
+            if (!profile.PROJECTILE_ENABLED) {
+                victimData.setVelocity(null);
+                return;
+            }
 
             ProjectileSource shooter = ((Projectile) source).getShooter();
 
